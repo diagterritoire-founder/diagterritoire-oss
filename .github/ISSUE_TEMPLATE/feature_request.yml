@@ -1,0 +1,38 @@
+name: Proposer une évolution
+description: Proposer une amélioration fonctionnelle de DiagTerritoire
+title: "[Évolution] "
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Besoin
+      description: Quel problème territorial, métier ou utilisateur cette évolution doit-elle résoudre ?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposition
+      description: Décrire la solution envisagée sans imposer inutilement une architecture technique.
+    validations:
+      required: true
+
+  - type: textarea
+    id: value
+    attributes:
+      label: Valeur pour les territoires
+      description: En quoi cette évolution améliore-t-elle l'observation, le diagnostic, le pilotage ou l'aide à la décision ?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives envisagées
+
+  - type: textarea
+    id: data
+    attributes:
+      label: Données ou ressources nécessaires
+      description: Préciser les sources, licences ou contraintes de réutilisation connues.

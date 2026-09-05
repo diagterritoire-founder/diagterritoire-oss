@@ -1,0 +1,54 @@
+name: Signaler un bug
+description: Signaler un comportement reproductible de DiagTerritoire
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de décrire le problème de manière factuelle.
+        Pour une vulnérabilité de sécurité, n'utilisez pas ce formulaire : utilisez le signalement privé GitHub.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Que se passe-t-il ?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Étapes de reproduction
+      description: Indiquez les étapes permettant de reproduire le problème.
+      placeholder: |
+        1. Ouvrir...
+        2. Sélectionner...
+        3. Observer...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Résultat attendu
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version ou commit
+      placeholder: v0.1.0 ou SHA
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environnement
+      description: Navigateur, système, Node.js, base de données ou autre information pertinente.
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs utiles
+      description: Ne publiez aucun secret, jeton, mot de passe ou donnée personnelle réelle.
