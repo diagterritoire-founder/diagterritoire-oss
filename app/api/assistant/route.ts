@@ -1,6 +1,10 @@
 import { auth } from "@/auth";
 
 import {
+  isTerritoryNotFoundError,
+} from "@/core/contracts";
+
+import {
   platformIntelligence,
 } from "@/core";
 
@@ -92,9 +96,7 @@ export async function POST(
         : "Erreur inconnue";
 
     const status =
-      message.startsWith(
-        "Territoire introuvable",
-      )
+      isTerritoryNotFoundError(error)
         ? 404
         : 500;
 

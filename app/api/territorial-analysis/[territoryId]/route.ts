@@ -1,5 +1,9 @@
 import { auth } from "@/auth";
 
+import {
+  isTerritoryNotFoundError,
+} from "@/core/contracts";
+
 import { platformIntelligence } from "@/core";
 
 export async function GET(
@@ -46,11 +50,10 @@ export async function GET(
         ? error.message
         : "Erreur inconnue";
 
-    const status = message.startsWith(
-      "Territoire introuvable",
-    )
-      ? 404
-      : 500;
+    const status =
+      isTerritoryNotFoundError(error)
+        ? 404
+        : 500;
 
     return Response.json(
       {

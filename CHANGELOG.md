@@ -5,6 +5,14 @@ Open Source de DiagTerritoire.
 
 ## Non publié
 
+### Contrats territoriaux
+
+- centralisation de la version publique du contrat territorial, maintenue en `1.0` ;
+- validation déterministe des réponses produites par la couche d'intelligence territoriale ;
+- ajout de la catégorie d'erreur stable `TERRITORY_NOT_FOUND` ;
+- suppression de la dépendance au texte libre des erreurs dans les routes territoriales ;
+- conservation des comportements HTTP existants : `401` sans authentification, `404` pour un territoire inexistant et `500` pour une erreur inattendue.
+
 ### Moteur de diagnostic
 
 - ajout de tests de caractérisation du moteur de diagnostic ;

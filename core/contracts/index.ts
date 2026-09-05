@@ -10,6 +10,7 @@ export {
 } from "./TerritorialIntelligenceVersion";
 
 export {
+  isTerritoryNotFoundError,
   TerritorialIntelligenceError,
   type TerritorialIntelligenceErrorCode,
 } from "./TerritorialIntelligenceError";

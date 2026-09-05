@@ -1,4 +1,5 @@
 export type TerritorialIntelligenceErrorCode =
+  | "TERRITORY_NOT_FOUND"
   | "INVALID_VERSION"
   | "INVALID_TERRITORY_ID"
   | "INVALID_TERRITORY_NAME"
@@ -18,4 +19,13 @@ export class TerritorialIntelligenceError extends Error {
 
     this.name = "TerritorialIntelligenceError";
   }
+}
+
+export function isTerritoryNotFoundError(
+  error: unknown,
+): error is TerritorialIntelligenceError {
+  return (
+    error instanceof TerritorialIntelligenceError &&
+    error.code === "TERRITORY_NOT_FOUND"
+  );
 }

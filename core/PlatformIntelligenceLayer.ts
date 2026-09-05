@@ -67,7 +67,7 @@ export class PlatformIntelligenceLayer {
           )
         : undefined;
 
-    return {
+    const response: TerritorialIntelligenceResponse = {
       version: TERRITORIAL_INTELLIGENCE_VERSION,
       territoryId: request.territoryId,
       territoryName: analysis.territory.name,
@@ -81,5 +81,9 @@ export class PlatformIntelligenceLayer {
         dashboardGenerated: dashboard !== undefined,
       },
     };
+
+    return TerritorialIntelligenceValidator.validate(
+      response,
+    );
   }
 }
