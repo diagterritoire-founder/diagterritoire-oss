@@ -4,6 +4,10 @@ import type {
 } from "@/types/domain";
 
 import {
+  TerritorialIntelligenceError,
+} from "../contracts/TerritorialIntelligenceError";
+
+import {
   AIAssistantEngine,
   AlertEngine,
   DiagnosticEngine,
@@ -57,8 +61,10 @@ export class EngineOrchestrator {
       );
 
     if (!territory) {
-      throw new Error(
+      throw new TerritorialIntelligenceError(
+        "TERRITORY_NOT_FOUND",
         `Territoire introuvable : ${input.territoryId}`,
+        "territoryId",
       );
     }
 

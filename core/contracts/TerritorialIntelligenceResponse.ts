@@ -7,8 +7,13 @@ import type {
   ExecutiveDashboardResult,
 } from "../engines/ExecutiveDashboardService";
 
-export const TERRITORIAL_INTELLIGENCE_VERSION =
-  "1.0" as const;
+import {
+  TERRITORIAL_INTELLIGENCE_VERSION,
+} from "./TerritorialIntelligenceVersion";
+
+export {
+  TERRITORIAL_INTELLIGENCE_VERSION,
+} from "./TerritorialIntelligenceVersion";
 
 export type TerritorialIntelligenceRequest = {
   territoryId: string;

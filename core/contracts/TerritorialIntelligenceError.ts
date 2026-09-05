@@ -1,4 +1,5 @@
 export type TerritorialIntelligenceErrorCode =
+  | "TERRITORY_NOT_FOUND"
   | "INVALID_VERSION"
   | "INVALID_TERRITORY_ID"
   | "INVALID_TERRITORY_NAME"
