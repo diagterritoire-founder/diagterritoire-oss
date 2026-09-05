@@ -5,6 +5,10 @@ Open Source de DiagTerritoire.
 
 ## Non publié
 
+### Documentation
+
+- cadrage de `v0.3.0` autour de la livrabilité opérationnelle du pilote : environnement reproductible, base PostgreSQL, CI, build, runtime et déploiement documenté ;
+
 ## 0.2.0 — 2026-09-05
 
 ### Contrats territoriaux
