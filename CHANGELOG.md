@@ -5,6 +5,12 @@ Open Source de DiagTerritoire.
 
 ## Non publié
 
+### Moteur de diagnostic
+
+- ajout de tests de caractérisation du moteur de diagnostic ;
+- consolidation de `core/engines/DiagnosticEngine.ts` comme implémentation de référence ;
+- suppression de l'ancienne implémentation dupliquée `core/DiagnosticEnigine.ts`.
+
 ### Tests
 
 - ajout d'une commande `npm test` fondée sur le runner natif Node.js via `tsx` ;
