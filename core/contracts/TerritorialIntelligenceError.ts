@@ -20,3 +20,12 @@ export class TerritorialIntelligenceError extends Error {
     this.name = "TerritorialIntelligenceError";
   }
 }
+
+export function isTerritoryNotFoundError(
+  error: unknown,
+): error is TerritorialIntelligenceError {
+  return (
+    error instanceof TerritorialIntelligenceError &&
+    error.code === "TERRITORY_NOT_FOUND"
+  );
+}

@@ -6,8 +6,9 @@ import {
 } from "../core/PlatformIntelligenceLayer";
 
 import {
+  isTerritoryNotFoundError,
   TerritorialIntelligenceError,
-} from "../core/contracts/TerritorialIntelligenceError";
+} from "../core/contracts";
 
 import type {
   TerritorialIntelligenceResponse,
@@ -198,4 +199,30 @@ test("fait passer la reponse de plateforme par le validateur", async () => {
     TerritorialIntelligenceValidator.validate =
       originalValidate;
   }
+});
+
+test("reconnait une erreur territoriale typee", () => {
+  const error =
+    new TerritorialIntelligenceError(
+      "TERRITORY_NOT_FOUND",
+      "Message libre volontairement different.",
+      "territoryId",
+    );
+
+  assert.equal(
+    isTerritoryNotFoundError(error),
+    true,
+  );
+});
+
+test("ne classe pas une erreur generique selon son texte", () => {
+  const error =
+    new Error(
+      "Territoire introuvable : territory-inconnu",
+    );
+
+  assert.equal(
+    isTerritoryNotFoundError(error),
+    false,
+  );
 });
