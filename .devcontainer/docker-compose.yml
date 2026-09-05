@@ -1,0 +1,31 @@
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/javascript-node:22-bookworm
+    volumes:
+      - ../..:/workspaces:cached
+    command: sleep infinity
+    environment:
+      DATABASE_URL: postgresql://diagterritoire:diagterritoire@db:5432/diagterritoire
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: diagterritoire
+      POSTGRES_USER: diagterritoire
+      POSTGRES_PASSWORD: diagterritoire
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U diagterritoire -d diagterritoire
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:
