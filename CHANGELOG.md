@@ -5,6 +5,11 @@ Open Source de DiagTerritoire.
 
 ## Non publié
 
+### Tests
+
+- ajout d'une commande `npm test` fondée sur le runner natif Node.js via `tsx` ;
+- ajout des premiers tests automatisés du moteur territorial.
+
 ### Documentation
 
 - ajout de la feuille de route et cadrage du périmètre candidat pour `v0.2.0`.

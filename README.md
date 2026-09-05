@@ -69,6 +69,7 @@ Aucun secret ni fichier `.env.local` ne doit être versionné.
 - `npm run dev` : développement local ;
 - `npm run build` : build de production ;
 - `npm run lint` : contrôle ESLint ;
+- `npm test` : exécution des tests automatisés ;
 - `npm run db:check-pilot` : contrôle du seed pilote.
 
 ## Organisation du dépôt
