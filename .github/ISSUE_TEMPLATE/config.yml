@@ -1,0 +1,10 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Signalement privé d'une vulnérabilité
+    url: https://github.com/diagterritoire-founder/diagterritoire-oss/security/advisories/new
+    about: Utiliser ce canal pour toute vulnérabilité ou information de sécurité confidentielle.
+
+  - name: Questions et échanges
+    url: https://github.com/diagterritoire-founder/diagterritoire-oss/discussions
+    about: Utiliser les Discussions pour les questions générales et les échanges communautaires.

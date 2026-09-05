@@ -1,6 +1,26 @@
 # Politique de sécurité
 
-La sécurité de DiagTerritoire concerne notamment l'authentification, les données, les comptes, les API, la base de données et les services externes.
+La sécurité de DiagTerritoire concerne notamment l'authentification, les données, les comptes, les API, la base de données, les dépendances et les services externes.
+
+## Signalement privé d'une vulnérabilité
+
+Une vulnérabilité de sécurité ne doit pas être publiée dans une issue, une discussion ou une Pull Request publique.
+
+DiagTerritoire utilise le mécanisme de signalement privé des vulnérabilités de GitHub.
+
+Pour effectuer un signalement confidentiel :
+
+https://github.com/diagterritoire-founder/diagterritoire-oss/security/advisories/new
+
+Le signalement devrait préciser autant que possible :
+
+- la zone ou le composant concerné ;
+- les étapes de reproduction ;
+- l'impact potentiel ;
+- les versions ou commits concernés ;
+- une proposition de correction éventuelle.
+
+Les secrets, données personnelles ou informations sensibles réelles ne doivent pas être inclus lorsqu'ils ne sont pas indispensables à l'analyse.
 
 ## Secrets
 
@@ -17,44 +37,40 @@ Sont notamment exclus du versionnement :
 
 Seul `.env.example` est destiné à être versionné et il ne doit contenir aucune valeur sensible réelle.
 
-## Signalement d'une vulnérabilité
+## Contrôles de sécurité du dépôt public
 
-Une vulnérabilité de sécurité ne doit pas être publiée dans une issue publique.
+Le dépôt public utilise notamment :
 
-Avant l'ouverture publique de DiagTerritoire, les signalements doivent être transmis au mainteneur du dépôt par un canal privé.
+- CodeQL pour l'analyse statique du code ;
+- GitHub Secret Scanning ;
+- la protection contre le push de secrets ;
+- les alertes Dependabot ;
+- les mises à jour de sécurité Dependabot.
 
-Un mécanisme permanent de signalement privé devra être configuré avant la publication Open Source du projet.
-
-## Contenu d'un signalement
-
-Un signalement devrait préciser autant que possible :
-
-- la zone concernée ;
-- les étapes de reproduction ;
-- l'impact potentiel ;
-- les versions ou commits concernés ;
-- une proposition de correction éventuelle.
-
-Les secrets ou données personnelles réelles ne doivent pas être inclus lorsqu'ils ne sont pas indispensables à l'analyse.
+Ces mécanismes complètent les revues humaines et ne remplacent pas l'analyse des modifications proposées.
 
 ## Dépendances
 
 Les alertes concernant les dépendances doivent être analysées avant toute mise à jour automatique majeure.
 
-Les corrections forcées susceptibles d'introduire des changements cassants ne doivent pas être appliquées sans examen préalable.
+Les corrections susceptibles d'introduire des changements cassants ne doivent pas être appliquées sans examen préalable.
 
-### Risque résiduel lié à la chaîne Prisma
+### Dépendances transitives et chaîne de build
 
-Lors de l'audit DT-OSS-005, quatre alertes de sévérité élevée restent associées à la chaîne Prisma 7.9.1 : `prisma`, `@prisma/config`, `mysql2` et `deepmerge-ts`.
+Certaines vulnérabilités peuvent concerner des dépendances transitives utilisées pendant l'installation, la génération du client Prisma ou le processus de build.
 
-Ces composants apparaissent dans l'arbre d'installation npm. Lors du contrôle de l'artefact de production généré pour Vercel, ils n'ont toutefois pas été retrouvés dans les fonctions déployées ; seul `@prisma/client` y est référencé.
+La présence d'une dépendance dans une portée de développement ne suffit pas à conclure à une exposition du runtime, mais ne justifie pas non plus d'ignorer une alerte de sécurité.
 
-Ces alertes sont donc suivies comme un risque résiduel de chaîne d'installation et de build, et non comme des composants identifiés dans le runtime web déployé lors de ce contrôle.
+L'état courant des vulnérabilités connues est suivi au moyen de GitHub Dependabot.
 
-Aucun downgrade, remplacement transitif forcé ou passage à une version candidate majeure de Prisma ne doit être effectué uniquement pour supprimer ces alertes. La situation devra être réévaluée dès qu'une version stable de Prisma apportera une correction compatible.
+Lorsqu'une version corrigée stable et compatible est disponible, sa mise à jour doit être examinée et testée dans un changement distinct.
+
+Les downgrades, remplacements transitifs forcés, overrides ou versions majeures non stables ne doivent pas être utilisés uniquement pour faire disparaître une alerte sans analyse de compatibilité.
 
 ## Versions prises en charge
 
-DiagTerritoire est actuellement en développement actif.
+DiagTerritoire est actuellement en développement actif avant la version `1.0`.
 
-La politique de support des versions sera formalisée avant la première publication Open Source stable.
+La dernière version publique publiée constitue la référence prise en charge en priorité pour les corrections de sécurité.
+
+Les anciennes versions peuvent ne plus recevoir de correctif une fois une version plus récente publiée.
