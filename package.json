@@ -7,7 +7,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "db:check-pilot": "tsx scripts/check-dt-seed.ts"
+    "db:check-pilot": "tsx scripts/check-dt-seed.ts",
+    "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
