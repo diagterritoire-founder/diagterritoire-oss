@@ -5,7 +5,9 @@ Open Source de DiagTerritoire.
 
 ## Non publié
 
-Aucun changement n'est encore affecté à une prochaine version publique.
+### Documentation
+
+- ajout de la feuille de route et cadrage du périmètre candidat pour `v0.2.0`.
 
 ## 0.1.1 — 2026-09-05
 

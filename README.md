@@ -98,6 +98,7 @@ Les ressources dont les droits de redistribution n'ont pas pu être établis ont
 - les règles de maintenance et de version sont décrites dans `MAINTENANCE.md` ;
 - les modalités de support figurent dans `SUPPORT.md` ;
 - les changements publiés sont suivis dans `CHANGELOG.md` ;
+- la feuille de route du projet est décrite dans `ROADMAP.md` ;
 - les composants et ressources tiers sont documentés dans `THIRD_PARTY_NOTICES.md`.
 
 ## Licence
