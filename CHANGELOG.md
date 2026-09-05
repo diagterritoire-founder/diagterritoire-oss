@@ -5,6 +5,8 @@ Open Source de DiagTerritoire.
 
 ## Non publié
 
+## 0.2.0 — 2026-09-05
+
 ### Contrats territoriaux
 
 - centralisation de la version publique du contrat territorial, maintenue en `1.0` ;
