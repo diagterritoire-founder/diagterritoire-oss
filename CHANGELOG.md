@@ -13,6 +13,14 @@ Open Source de DiagTerritoire.
 - suppression de la dépendance au texte libre des erreurs dans les routes territoriales ;
 - conservation des comportements HTTP existants : `401` sans authentification, `404` pour un territoire inexistant et `500` pour une erreur inattendue.
 
+### Parcours territorial de référence
+
+- validation automatisée du parcours `territoire → analyse → diagnostic → prospective → restitution` ;
+- couverture du département de Mayotte, des 5 EPCI et des 17 communes pilotes ;
+- caractérisation de Mayotte, CADEMA et Mamoudzou ainsi que du cas territoire inconnu ;
+- contrôle du raccordement des restitutions territoire, rapport, prospective et API ;
+- le rendu visuel final et le `next build` complet restent des contrôles d'environnement ; aucune `DATABASE_URL` fictive n'est injectée.
+
 ### Moteur de diagnostic
 
 - ajout de tests de caractérisation du moteur de diagnostic ;
