@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Workspace {
+  id             String   @id
+  organizationId String
+  territoryId    String
+  name           String
+  slug           String   @unique
+  status         String
+  createdAt      DateTime
+  updatedAt      DateTime
+
+  services      WorkspaceService[]
+  users         WorkspaceUser[]
+  contributions WorkspaceContribution[]
+
+  @@index([territoryId])
+  @@index([organizationId])
+  @@index([status])
+}
+
+model WorkspaceService {
+  id              String   @id
+  workspaceId     String
+  organizationId  String?
+  parentServiceId String?
+  name            String
+  slug            String
+  category        String
+  description     String?
+  managerUserId   String?
+  status          String
+  createdAt       DateTime
+  updatedAt       DateTime
+
+  workspace     Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  parent        WorkspaceService?       @relation("ServiceHierarchy", fields: [parentServiceId], references: [id], onDelete: SetNull)
+  children      WorkspaceService[]      @relation("ServiceHierarchy")
+  contributions WorkspaceContribution[]
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId])
+  @@index([parentServiceId])
+  @@index([category])
+  @@index([status])
+}
+
+model WorkspaceUser {
+  id          String   @id
+  workspaceId String
+  email       String
+  displayName String
+  title       String?
+  serviceIds  Json
+  roles       Json
+  permissions Json
+  status      String
+  createdAt   DateTime
+  updatedAt   DateTime
+
+  workspace      Workspace                  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contributions  WorkspaceContribution[]    @relation("ContributionAuthor")
+  validations    WorkspaceContribution[]    @relation("ContributionValidator")
+  historyEntries ContributionHistoryEntry[]
+  credential     WorkspaceCredential?
+
+  @@unique([workspaceId, email])
+  @@index([workspaceId])
+  @@index([status])
+}
+
+model WorkspaceCredential {
+  id           String   @id
+  userId       String   @unique
+  passwordHash String
+  createdAt    DateTime
+  updatedAt    DateTime
+
+  user WorkspaceUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model WorkspaceContribution {
+  id              String    @id
+  workspaceId     String
+  serviceId       String
+  territoryId     String
+  organizationId  String
+  authorUserId    String
+  validatorUserId String?
+  type            String
+  title           String
+  description     String?
+  status          String
+  indicatorId     String?
+  projectId       String?
+  knowledgeId     String?
+  exchangeId      String?
+  source          String?
+  referencePeriod String?
+  createdAt       DateTime
+  updatedAt       DateTime
+  submittedAt     DateTime?
+  validatedAt     DateTime?
+  publishedAt     DateTime?
+
+  workspace Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  service   WorkspaceService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  author WorkspaceUser @relation("ContributionAuthor", fields: [authorUserId], references: [id], onDelete: Restrict)
+
+  validator WorkspaceUser? @relation("ContributionValidator", fields: [validatorUserId], references: [id], onDelete: SetNull)
+
+  history ContributionHistoryEntry[]
+
+  @@index([workspaceId])
+  @@index([serviceId])
+  @@index([territoryId])
+  @@index([status])
+  @@index([authorUserId])
+  @@index([validatorUserId])
+  @@index([updatedAt])
+}
+
+model ContributionHistoryEntry {
+  id             String   @id
+  contributionId String
+  actorUserId    String
+  fromStatus     String?
+  toStatus       String
+  comment        String?
+  createdAt      DateTime
+
+  contribution WorkspaceContribution @relation(fields: [contributionId], references: [id], onDelete: Cascade)
+  actor        WorkspaceUser         @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([contributionId])
+  @@index([actorUserId])
+  @@index([createdAt])
+}

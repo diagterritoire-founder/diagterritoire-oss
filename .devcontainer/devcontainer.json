@@ -1,0 +1,23 @@
+{
+  "name": "DiagTerritoire",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22-bookworm",
+  "remoteUser": "node",
+  "containerEnv": {
+    "HOME": "/home/node"
+  },
+  "remoteEnv": {
+    "HOME": "/home/node"
+  },
+  "forwardPorts": [
+    3000
+  ],
+  "portsAttributes": {
+    "3000": {
+      "label": "DiagTerritoire",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/git-lfs:1": {}
+  }
+}
