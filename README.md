@@ -91,9 +91,14 @@ Leur provenance, leur régime de réutilisation et les éventuelles obligations 
 
 Les ressources dont les droits de redistribution n'ont pas pu être établis ont été exclues de la distribution publique lors de la préparation Open Source.
 
-## Sécurité et contribution
+## Sécurité, contribution et maintenance
 
-Les règles de sécurité, de contribution et les notices relatives aux composants tiers seront documentées dans les fichiers dédiés du dépôt.
+- les règles de contribution sont décrites dans `CONTRIBUTING.md` ;
+- les signalements de sécurité sont encadrés par `SECURITY.md` ;
+- les règles de maintenance et de version sont décrites dans `MAINTENANCE.md` ;
+- les modalités de support figurent dans `SUPPORT.md` ;
+- les changements publiés sont suivis dans `CHANGELOG.md` ;
+- les composants et ressources tiers sont documentés dans `THIRD_PARTY_NOTICES.md`.
 
 ## Licence
 
