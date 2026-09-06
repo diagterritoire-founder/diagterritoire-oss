@@ -28,6 +28,7 @@ Open Source de DiagTerritoire.
 ### Documentation
 
 - cadrage de `v0.3.0` autour de la livrabilité opérationnelle du pilote : environnement reproductible, base PostgreSQL, CI, build, runtime et déploiement documenté ;
+- documentation du chemin de déploiement de référence du pilote dans `DEPLOYMENT.md`, avec PostgreSQL, variables d’environnement, build, runtime et limites de validation ;
 
 ## 0.2.0 — 2026-09-05
 
