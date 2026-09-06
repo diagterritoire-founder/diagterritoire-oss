@@ -8,7 +8,8 @@ Open Source de DiagTerritoire.
 ### Intégration continue
 
 - ajout d'un workflow GitHub Actions de validation de livraison sur les Pull Requests et les pushes vers `main` ;
-- validation avec Node.js 22 et PostgreSQL 16 éphémère : `npm ci`, initialisation Prisma du pilote, tests automatisés, build de production et `npm audit` ;
+- validation avec Node.js 22 et PostgreSQL 16 éphémère : `npm ci`, initialisation Prisma du pilote, tests automatisés, build de production, smoke test du runtime et `npm audit` ;
+- ajout d’un contrôle reproductible qui démarre le build avec `next start` et vérifie plusieurs réponses HTTP représentatives, sans secret de production versionné ;
 - documentation explicite des prérequis et de la dette ESLint existante, sans masquer les échecs réels.
 
 ### Environnement de développement

@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
+    "runtime:check": "bash scripts/check-production-runtime.sh",
     "lint": "eslint",
     "db:check-pilot": "tsx scripts/check-dt-seed.ts",
     "test": "tsx --test tests/*.test.ts",
