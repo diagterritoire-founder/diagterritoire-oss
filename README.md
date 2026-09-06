@@ -58,11 +58,51 @@ La cartographie utilise directement Leaflet 1.9.4.
 
 ## Installation locale
 
-Installer les dépendances avec `npm install`.
+### Environnement de référence : Dev Container / Codespaces
 
-Créer ensuite un fichier `.env.local` à partir de `.env.example` et renseigner uniquement les variables nécessaires à l'environnement local.
+L'environnement de développement de référence utilise Docker Compose via
+le Dev Container.
 
-Aucun secret ni fichier `.env.local` ne doit être versionné.
+Il démarre deux services :
+
+- `app` : environnement Node.js 22 de DiagTerritoire ;
+- `db` : instance PostgreSQL 16 dédiée au développement.
+
+Le service `app` reçoit automatiquement une `DATABASE_URL` réelle
+pointant vers le service PostgreSQL `db`.
+
+Les identifiants PostgreSQL présents dans le fichier Compose sont des
+identifiants locaux de développement. Ils ne constituent pas des secrets
+de production et ne doivent pas être réutilisés pour un déploiement réel.
+
+Après ouverture ou reconstruction du Dev Container :
+
+```bash
+npm ci
+```
+
+La présence de PostgreSQL ne crée pas automatiquement le schéma métier ni
+les données pilotes. Leur initialisation reste une opération explicite.
+
+### Exécution hors Dev Container
+
+Installer les dépendances :
+
+```bash
+npm ci
+```
+
+Créer ensuite un fichier local non versionné :
+
+```bash
+cp .env.example .env
+```
+
+Renseigner dans ce fichier une vraie `DATABASE_URL` PostgreSQL adaptée à
+l'environnement utilisé.
+
+Les fichiers `.env` sont ignorés par Git et ne doivent jamais contenir de
+secret versionné.
 
 ## Commandes principales
 

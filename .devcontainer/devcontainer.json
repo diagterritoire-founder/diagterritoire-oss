@@ -1,6 +1,8 @@
 {
   "name": "DiagTerritoire",
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:22-bookworm",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "remoteUser": "node",
   "containerEnv": {
     "HOME": "/home/node"

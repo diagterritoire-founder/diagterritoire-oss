@@ -5,6 +5,12 @@ Open Source de DiagTerritoire.
 
 ## Non publié
 
+### Environnement de développement
+
+- ajout d'un Dev Container Docker Compose avec une instance PostgreSQL 16 réelle et persistante pour le développement ;
+- configuration automatique de la `DATABASE_URL` locale du service applicatif vers PostgreSQL ;
+- documentation du fonctionnement avec et sans Dev Container, sans secret de production versionné ;
+
 ### Documentation
 
 - cadrage de `v0.3.0` autour de la livrabilité opérationnelle du pilote : environnement reproductible, base PostgreSQL, CI, build, runtime et déploiement documenté ;
