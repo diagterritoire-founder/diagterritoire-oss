@@ -128,6 +128,26 @@ secret versionné.
 - `npm run db:check-pilot` : contrôle du workspace pilote ;
 - `npm run db:init-pilot` : initialisation complète et reproductible du pilote.
 
+## Validation continue
+
+La validation de livraison est automatisée par GitHub Actions sur les Pull Requests et sur les pushes vers `main`.
+
+Le workflow utilise un environnement éphémère composé de Node.js 22 et PostgreSQL 16. La `DATABASE_URL` du workflow pointe réellement vers ce service PostgreSQL de CI. Les identifiants utilisés sont propres à cette instance temporaire et ne constituent pas des secrets de production.
+
+La séquence de validation est :
+
+- `npm ci` : installation reproductible des dépendances ;
+- `npm run db:init-pilot` : génération Prisma, migrations, seed pilote et contrôle de la base ;
+- `npm test` : tests automatisés ;
+- `npm run build` : build Next.js de production ;
+- `npm audit` : contrôle des vulnérabilités connues des dépendances.
+
+Chaque étape est bloquante : une commande qui retourne un code non nul fait échouer le job. Aucun secret de production ni variable fictive n'est injecté pour contourner un contrôle.
+
+Le lint reste disponible avec `npm run lint`, mais n'est pas actuellement un contrôle bloquant de cette CI en raison d'erreurs préexistantes sur `main`. Elles ne sont ni masquées ni converties artificiellement en succès.
+
+CodeQL et Dependabot restent des contrôles complémentaires.
+
 ## Organisation du dépôt
 
 - `app/` : application Next.js et routes ;
