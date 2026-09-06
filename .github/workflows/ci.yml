@@ -60,5 +60,8 @@ jobs:
       - name: Build production
         run: npm run build
 
+      - name: Check production runtime
+        run: npm run runtime:check
+
       - name: Audit dependencies
         run: npm audit

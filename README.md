@@ -121,6 +121,7 @@ secret versionné.
 
 - `npm run dev` : développement local ;
 - `npm run build` : build de production ;
+- `npm run runtime:check` : démarre le build de production et exécute le smoke test HTTP du runtime ;
 - `npm run lint` : contrôle ESLint ;
 - `npm test` : exécution des tests automatisés ;
 - `npm run db:migrate` : application des migrations Prisma versionnées ;
@@ -140,6 +141,7 @@ La séquence de validation est :
 - `npm run db:init-pilot` : génération Prisma, migrations, seed pilote et contrôle de la base ;
 - `npm test` : tests automatisés ;
 - `npm run build` : build Next.js de production ;
+- `npm run runtime:check` : démarrage du build et smoke test HTTP du runtime de production ;
 - `npm audit` : contrôle des vulnérabilités connues des dépendances.
 
 Chaque étape est bloquante : une commande qui retourne un code non nul fait échouer le job. Aucun secret de production ni variable fictive n'est injecté pour contourner un contrôle.
@@ -147,6 +149,20 @@ Chaque étape est bloquante : une commande qui retourne un code non nul fait éc
 Le lint reste disponible avec `npm run lint`, mais n'est pas actuellement un contrôle bloquant de cette CI en raison d'erreurs préexistantes sur `main`. Elles ne sont ni masquées ni converties artificiellement en succès.
 
 CodeQL et Dependabot restent des contrôles complémentaires.
+
+### Contrôle du runtime de production
+
+Après un build réussi, le runtime peut être contrôlé avec :
+
+```bash
+npm run runtime:check
+```
+
+Le contrôle exige une vraie `DATABASE_URL` accessible et une base pilote initialisée. Il vérifie au préalable que les données pilotes attendues sont accessibles, puis démarre le résultat de `next build` avec `next start` sur une adresse locale. S’il n’existe pas déjà, un `AUTH_SECRET` aléatoire et éphémère est généré uniquement pour la durée du smoke test ; sa valeur n’est ni affichée ni versionnée. Le contrôle fixe également son URL Auth.js sur l’instance locale testée afin de ne pas dépendre du nom d’hôte du Codespace ou du runner CI.
+
+Le smoke test vérifie la disponibilité de la page de connexion, les redirections des routes racine et protégée, la réponse de session Auth.js et le refus attendu d’une API territoriale sans authentification. Il échoue aussi si Auth.js journalise une erreur pendant ces contrôles.
+
+Ce contrôle reste volontairement limité : il ne valide pas une connexion utilisateur complète, les parcours métier authentifiés, le rendu dans un navigateur, un reverse proxy, TLS, un nom de domaine public ni la configuration des secrets d’un déploiement réel. Ces éléments relèvent de la validation de déploiement de l’environnement cible.
 
 ## Organisation du dépôt
 
