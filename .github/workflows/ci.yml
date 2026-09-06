@@ -1,0 +1,64 @@
+name: Delivery validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: delivery-validation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Delivery validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16-bookworm
+        env:
+          POSTGRES_DB: diagterritoire_ci
+          POSTGRES_USER: diagterritoire
+          POSTGRES_PASSWORD: diagterritoire
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U diagterritoire -d diagterritoire_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      CI: "true"
+      DATABASE_URL: postgresql://diagterritoire:diagterritoire@127.0.0.1:5432/diagterritoire_ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Initialize pilot database
+        run: npm run db:init-pilot
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build production
+        run: npm run build
+
+      - name: Audit dependencies
+        run: npm audit

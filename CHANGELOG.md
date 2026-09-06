@@ -5,6 +5,12 @@ Open Source de DiagTerritoire.
 
 ## Non publié
 
+### Intégration continue
+
+- ajout d'un workflow GitHub Actions de validation de livraison sur les Pull Requests et les pushes vers `main` ;
+- validation avec Node.js 22 et PostgreSQL 16 éphémère : `npm ci`, initialisation Prisma du pilote, tests automatisés, build de production et `npm audit` ;
+- documentation explicite des prérequis et de la dette ESLint existante, sans masquer les échecs réels.
+
 ### Environnement de développement
 
 - ajout d'un Dev Container Docker Compose avec une instance PostgreSQL 16 réelle et persistante pour le développement ;
