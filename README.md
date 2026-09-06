@@ -52,9 +52,12 @@ DiagTerritoire utilise notamment :
 - Auth.js ;
 - Leaflet ;
 - Tailwind CSS ;
-- Vercel.
 
 La cartographie utilise directement Leaflet 1.9.4.
+
+## Déploiement
+
+Le chemin de déploiement de référence du pilote, ses prérequis, ses variables d’environnement, les opérations PostgreSQL et les limites de validation sont documentés dans [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 ## Installation locale
 
