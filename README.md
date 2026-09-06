@@ -84,6 +84,19 @@ npm ci
 La présence de PostgreSQL ne crée pas automatiquement le schéma métier ni
 les données pilotes. Leur initialisation reste une opération explicite.
 
+### Initialisation de la base pilote
+
+La base PostgreSQL cible doit exister et être désignée par une vraie `DATABASE_URL`.
+DiagTerritoire distingue ensuite quatre opérations :
+
+- `npm run db:migrate` : applique les migrations Prisma versionnées. Sur une base vide, elles créent le schéma ; sur une base existante, seules les migrations en attente sont appliquées ;
+- `npm run db:seed-pilot` : applique explicitement les données du workspace pilote Dzaoudzi-Labattoir et ses utilisateurs pilotes, sans gérer le schéma ;
+- `npm run db:check-pilot` : contrôle que le workspace pilote attendu est accessible dans la base configurée ;
+- `npm run db:init-pilot` : génère le client Prisma, applique les migrations, exécute le seed pilote puis lance le contrôle.
+
+Le seed pilote est conçu pour pouvoir être rejoué sans créer de doublons sur les données actuellement versionnées.
+
+
 ### Exécution hors Dev Container
 
 Installer les dépendances :
@@ -110,7 +123,10 @@ secret versionné.
 - `npm run build` : build de production ;
 - `npm run lint` : contrôle ESLint ;
 - `npm test` : exécution des tests automatisés ;
-- `npm run db:check-pilot` : contrôle du seed pilote.
+- `npm run db:migrate` : application des migrations Prisma versionnées ;
+- `npm run db:seed-pilot` : application explicite des données pilotes ;
+- `npm run db:check-pilot` : contrôle du workspace pilote ;
+- `npm run db:init-pilot` : initialisation complète et reproductible du pilote.
 
 ## Organisation du dépôt
 

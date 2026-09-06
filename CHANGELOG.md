@@ -11,6 +11,13 @@ Open Source de DiagTerritoire.
 - configuration automatique de la `DATABASE_URL` locale du service applicatif vers PostgreSQL ;
 - documentation du fonctionnement avec et sans Dev Container, sans secret de production versionné ;
 
+### Base de données pilote
+
+- ajout d'un chemin reproductible d'initialisation du pilote fondé sur les migrations Prisma versionnées ;
+- ajout d'un runner explicite pour appliquer les seeds PostgreSQL du workspace Dzaoudzi-Labattoir et de ses utilisateurs pilotes ;
+- ajout des commandes `db:migrate`, `db:seed-pilot` et `db:init-pilot` tout en conservant `db:check-pilot` pour la vérification ;
+- séparation documentée entre création du schéma par migrations, mise à niveau du schéma et application des données pilotes ;
+
 ### Documentation
 
 - cadrage de `v0.3.0` autour de la livrabilité opérationnelle du pilote : environnement reproductible, base PostgreSQL, CI, build, runtime et déploiement documenté ;

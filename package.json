@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "db:check-pilot": "tsx scripts/check-dt-seed.ts",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed-pilot": "tsx scripts/seed-pilot.ts",
+    "db:init-pilot": "prisma generate && npm run db:migrate && npm run db:seed-pilot && npm run db:check-pilot"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
