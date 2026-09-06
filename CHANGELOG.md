@@ -5,6 +5,8 @@ Open Source de DiagTerritoire.
 
 ## Non publié
 
+## 0.3.0 — 2026-09-06
+
 ### Intégration continue
 
 - ajout d'un workflow GitHub Actions de validation de livraison sur les Pull Requests et les pushes vers `main` ;
