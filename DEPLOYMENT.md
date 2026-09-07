@@ -222,3 +222,116 @@ Avant une mise en service réelle, l’environnement cible doit notamment valide
 `npm run runtime:check` reste un smoke test local reproductible. Il ne remplace pas ces contrôles propres à l’environnement réellement déployé.
 
 Le déploiement est considéré conforme à ce chemin de référence uniquement lorsque les étapes documentées ont été exécutées sans variable fictive, sans secret versionné et avec une base PostgreSQL réelle.
+
+## 11. Qualification du pilote OVHcloud Public Cloud
+
+### 11.1 Environnement qualifié
+
+Une première qualification réelle du chemin de déploiement a été exécutée le 7 septembre 2026 sur OVHcloud Public Cloud Compute, dans la région Paris `EU-WEST-PAR`.
+
+L'environnement utilisé pour cette qualification repose sur :
+
+- une instance Compute Optimized `c3-8` ;
+- 4 vCore ;
+- 8 Go de mémoire vive ;
+- 100 Go de stockage NVMe ;
+- Ubuntu 26.04 LTS ;
+- Node.js 22.22.1 ;
+- PostgreSQL 16.15 ;
+- un pare-feu hôte actif avec politique entrante restrictive ;
+- une authentification SSH par clé publique, sans authentification SSH par mot de passe.
+
+Aucune adresse IP publique, aucun identifiant de projet ou d'instance du fournisseur et aucun secret réel ne sont conservés dans le dépôt.
+
+La révision applicative initialement qualifiée est le commit `5a0e803453fcf5cc0841bb71ed9735d95685c47e`.
+
+### 11.2 PostgreSQL du pilote
+
+PostgreSQL 16 est exécuté sur l'instance du pilote et reste lié à l'interface locale `127.0.0.1` sur le port 5432.
+
+Le compte applicatif PostgreSQL :
+
+- dispose du droit de connexion ;
+- n'est pas superutilisateur ;
+- ne peut pas créer de base ;
+- ne peut pas créer de rôle ;
+- ne dispose pas du droit de réplication.
+
+La base applicative est possédée par ce compte afin de permettre l'application des migrations versionnées nécessaires à DiagTerritoire sans lui accorder de privilèges d'administration du cluster PostgreSQL.
+
+Les secrets applicatifs sont conservés hors du dépôt dans un fichier d'environnement système lisible uniquement par `root` et le groupe du service DiagTerritoire. Les valeurs réelles de `DATABASE_URL` et `AUTH_SECRET` ne sont ni documentées ni versionnées.
+
+### 11.3 Initialisation et migrations réelles
+
+Le dépôt a été cloné sur l'instance puis verrouillé sur la révision qualifiée.
+
+Les contrôles suivants ont réussi sur l'environnement réel :
+
+- `npm ci` ;
+- génération du client Prisma ;
+- `prisma migrate deploy` ;
+- application des deux migrations versionnées présentes à cette révision ;
+- application du seed pilote ;
+- `npm run db:check-pilot` ;
+- `npx prisma migrate status`.
+
+Le contrôle du seed a retrouvé le workspace pilote attendu et ses 14 services.
+
+Prisma a confirmé que le schéma de la base réelle est à jour.
+
+### 11.4 Sauvegarde quotidienne
+
+La sauvegarde logique fournie par `npm run db:backup` a été exécutée avec succès sur la base réelle du pilote.
+
+Le contrôle a validé :
+
+- la création d'un dump PostgreSQL au format `custom` ;
+- la lisibilité du dump par `pg_restore` ;
+- le contrôle SHA-256 associé ;
+- des permissions restrictives sur le dump et son checksum ;
+- le stockage hors du dépôt Git.
+
+Pour le pilote, la sauvegarde est automatisée par un timer systemd :
+
+- fréquence : quotidienne ;
+- horaire de référence : 02:30 UTC ;
+- délai aléatoire maximal : 15 minutes ;
+- exécution persistante après indisponibilité temporaire de la machine ;
+- rétention : 7 jours ;
+- répertoire : `/var/backups/diagterritoire`.
+
+Le service de sauvegarde est exécuté sous le compte système DiagTerritoire et utilise le fichier de secrets externe à Git.
+
+### 11.5 Qualification de la restauration sur l'instance réelle
+
+Le dump produit sur l'instance réelle a été restauré dans une base PostgreSQL isolée et temporaire.
+
+La qualification a vérifié successivement :
+
+1. le checksum du dump ;
+2. la restauration complète dans une base vide ;
+3. la connexion avec le compte applicatif limité ;
+4. la présence du workspace pilote et de ses données attendues avec `npm run db:check-pilot` ;
+5. l'état des migrations avec `npx prisma migrate status` ;
+6. la suppression de la base temporaire après validation.
+
+La restauration a réussi et Prisma a confirmé que le schéma restauré est à jour.
+
+Cette validation qualifie la base PostgreSQL réelle du pilote ainsi que le mécanisme de sauvegarde et de restauration sur cet environnement.
+
+### 11.6 Éléments restant à qualifier
+
+Cette qualification ne constitue pas encore la validation complète de l'environnement public DiagTerritoire.
+
+Restent notamment à réaliser :
+
+- le choix et la configuration du nom d'hôte public ;
+- le reverse proxy ;
+- l'ouverture contrôlée des ports HTTP et HTTPS ;
+- la mise en place et le contrôle TLS ;
+- le service permanent de l'application et sa politique de redémarrage ;
+- la supervision et les journaux ;
+- la validation Auth.js sur l'hôte public ;
+- les parcours authentifiés de bout en bout.
+
+Aucun de ces éléments n'est présenté comme validé tant que son contrôle réel n'a pas été effectué.
