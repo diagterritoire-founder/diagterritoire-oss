@@ -319,7 +319,55 @@ La restauration a réussi et Prisma a confirmé que le schéma restauré est à 
 
 Cette validation qualifie la base PostgreSQL réelle du pilote ainsi que le mécanisme de sauvegarde et de restauration sur cet environnement.
 
-### 11.6 Éléments restant à qualifier
+### 11.6 Supervision et redémarrage du runtime
+
+Le pilote exécute l'application avec un service `systemd` permanent activé au démarrage de l'hôte. Le service utilise le compte système dédié DiagTerritoire, charge ses variables et secrets depuis un fichier d'environnement système externe au dépôt Git et lance `next start` uniquement sur `127.0.0.1:3000`.
+
+La politique `Restart=on-failure` avec un délai de 5 secondes a été validée par interruption forcée du processus principal. `systemd` a détecté l'échec et relancé automatiquement l'application. Après redémarrage, le service est revenu à l'état actif et le contrôle HTTP local a réussi. Cette politique vise les arrêts anormaux et non un arrêt volontaire avec `systemctl stop`.
+
+Un redémarrage complet de l'hôte a également été qualifié. PostgreSQL, le service applicatif et le timer de sauvegarde sont revenus automatiquement à l'état actif, aucun service système n'était signalé en échec et le contrôle HTTP local a réussi.
+
+Le port applicatif 3000 reste lié à l'interface locale et n'est pas exposé publiquement. Cette configuration est conservée jusqu'à la mise en place du reverse proxy et de TLS.
+
+#### Contrôle de disponibilité
+
+Le contrôle HTTP local de référence est :
+
+```bash
+curl -fsS http://127.0.0.1:3000/connexion >/dev/null
+```
+
+Pour afficher explicitement le code HTTP :
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/connexion
+```
+
+La route locale de session Auth.js a également répondu avec succès pendant la qualification.
+
+#### Diagnostic et redémarrage
+
+Les commandes de référence sont :
+
+```bash
+sudo systemctl status diagterritoire.service --no-pager
+sudo journalctl -u diagterritoire.service -b --no-pager -n 100
+sudo journalctl -u diagterritoire.service -b -p err --no-pager
+systemctl --failed --no-pager
+sudo systemctl restart diagterritoire.service
+```
+
+Après un redémarrage manuel, contrôler de nouveau l'état du service et la disponibilité HTTP locale.
+
+#### Journaux et rétention
+
+Les journaux sont stockés avec `systemd-journald` en mode persistant. La politique `journald` de l'hôte qualifié limite les journaux système persistants à 500 Mo et à 14 jours de conservation. Ces limites concernent l'ensemble du journal système persistant de l'hôte et non uniquement DiagTerritoire.
+
+Pendant la qualification, aucune entrée de niveau `err` n'était présente dans les journaux applicatifs du démarrage contrôlé. La vérification ciblée des journaux n'a révélé aucun marqueur `DATABASE_URL=`, `AUTH_SECRET=` ni URL de connexion PostgreSQL de type `postgresql://`.
+
+Les secrets, mots de passe et chaînes de connexion sensibles ne doivent jamais être écrits dans les journaux.
+
+### 11.7 Éléments restant à qualifier
 
 Cette qualification ne constitue pas encore la validation complète de l'environnement public DiagTerritoire.
 
@@ -329,8 +377,6 @@ Restent notamment à réaliser :
 - le reverse proxy ;
 - l'ouverture contrôlée des ports HTTP et HTTPS ;
 - la mise en place et le contrôle TLS ;
-- le service permanent de l'application et sa politique de redémarrage ;
-- la supervision et les journaux ;
 - la validation Auth.js sur l'hôte public ;
 - les parcours authentifiés de bout en bout.
 
