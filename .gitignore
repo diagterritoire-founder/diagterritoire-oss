@@ -43,3 +43,7 @@ next-env.d.ts
 
 # prisma generated client
 /generated/prisma/
+
+# PostgreSQL backups
+*.dump
+*.dump.sha256

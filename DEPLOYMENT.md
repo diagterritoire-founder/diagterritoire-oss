@@ -35,6 +35,7 @@ Le chemin de référence a été validé avec :
 - Node.js 22 ;
 - npm et le fichier `package-lock.json` versionné ;
 - PostgreSQL 16 ;
+- les utilitaires clients PostgreSQL 16 (`psql`, `pg_dump` et `pg_restore`) pour les opérations de sauvegarde et de restauration ;
 - un environnement capable d’exécuter `bash` et `curl` pour le contrôle du runtime ;
 - un accès réseau à la base PostgreSQL cible.
 
@@ -83,6 +84,53 @@ La variable `DATABASE_URL` doit pointer vers cette base et fournir les informati
 Les identifiants présents dans `.devcontainer/docker-compose.yml` sont exclusivement destinés au développement local. Ils ne doivent jamais être réutilisés dans un environnement réel.
 
 Le choix du fournisseur PostgreSQL, de l’hébergement, de la sauvegarde et de la politique de haute disponibilité relève de l’environnement cible et n’est pas imposé par le dépôt.
+
+### 5.1 Sauvegarde logique
+
+Le dépôt fournit une sauvegarde logique PostgreSQL avec `npm run db:backup`.
+
+La commande utilise `pg_dump` au format `custom`, génère un contrôle SHA-256 et applique des permissions restrictives aux fichiers produits.
+
+Pour le pilote, la stratégie de référence prévoit une sauvegarde logique quotidienne avec une rétention locale de 7 jours. Par défaut, les sauvegardes sont écrites dans `/var/backups/diagterritoire`. `BACKUP_DIR` permet de changer le répertoire et `RETENTION_DAYS` la durée de rétention.
+
+Les sauvegardes doivent rester hors du dépôt Git. Le script refuse explicitement d’écrire un dump dans le dépôt.
+
+### 5.2 Sauvegarde avant migration
+
+Avant toute migration d’une base déjà utilisée, exécuter une sauvegarde immédiatement avant.
+
+Exécuter `npm run db:backup`, puis `npm run db:migrate`.
+
+La migration ne doit pas être lancée si la sauvegarde échoue.
+
+Le dump et son checksum doivent être conservés jusqu’à validation du fonctionnement de l’application après migration.
+
+
+### 5.3 Restauration contrôlée
+
+Le dépôt fournit une restauration PostgreSQL contrôlée avec `npm run db:restore`.
+
+La restauration exige un dump existant, son fichier `.sha256`, une base cible déjà créée et vide, ainsi qu’une confirmation explicite du nom réel de la base cible.
+
+Les variables `BACKUP_FILE`, `TARGET_DATABASE_URL` et `RESTORE_CONFIRM_DATABASE` doivent être définies avant l’exécution.
+
+Le script vérifie le checksum, refuse une confirmation incorrecte et refuse de restaurer dans une base non vide.
+
+`TARGET_DATABASE_URL` peut contenir des identifiants PostgreSQL et doit rester hors du dépôt et de toute documentation contenant des valeurs réelles.
+
+
+### 5.4 Qualification de la restauration
+
+Le mécanisme de sauvegarde et de restauration a été validé avec PostgreSQL 16 en restaurant un dump dans une base isolée.
+
+Le contrôle a vérifié le checksum du dump, le refus d’une confirmation incorrecte, le refus d’une base non vide et la restauration effective dans une base vide.
+
+Après restauration, `npm run db:check-pilot` et `npx prisma migrate status` ont confirmé que les données pilotes étaient accessibles et que les migrations versionnées étaient à jour.
+
+La base de restauration isolée a ensuite été supprimée.
+
+Cette validation qualifie le mécanisme, mais pas encore l’instance PostgreSQL du pilote réellement déployé. Le test devra être rejoué sur cet environnement avant sa qualification définitive.
+
 
 ## 6. Initialisation de la base
 

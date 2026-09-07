@@ -12,7 +12,9 @@
     "test": "tsx --test tests/*.test.ts",
     "db:migrate": "prisma migrate deploy",
     "db:seed-pilot": "tsx scripts/seed-pilot.ts",
-    "db:init-pilot": "prisma generate && npm run db:migrate && npm run db:seed-pilot && npm run db:check-pilot"
+    "db:init-pilot": "prisma generate && npm run db:migrate && npm run db:seed-pilot && npm run db:check-pilot",
+    "db:backup": "bash scripts/backup-postgresql.sh",
+    "db:restore": "bash scripts/restore-postgresql.sh"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",

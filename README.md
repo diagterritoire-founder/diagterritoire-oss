@@ -131,6 +131,8 @@ secret versionné.
 - `npm run db:seed-pilot` : application explicite des données pilotes ;
 - `npm run db:check-pilot` : contrôle du workspace pilote ;
 - `npm run db:init-pilot` : initialisation complète et reproductible du pilote.
+- `npm run db:backup` : sauvegarde logique PostgreSQL avec checksum et rétention ;
+- `npm run db:restore` : restauration contrôlée vers une base PostgreSQL vide.
 
 ## Validation continue
 
