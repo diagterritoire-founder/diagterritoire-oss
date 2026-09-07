@@ -404,3 +404,58 @@ La qualification Auth.js sur l'hôte public a validé :
 Aucun mot de passe, secret d'authentification ni identifiant personnel utilisé pendant la qualification n'est versionné.
 
 Ces contrôles qualifient l'exposition publique, TLS et l'authentification Auth.js du pilote pour le périmètre de déploiement actuellement retenu.
+
+### 11.8 Qualification de bout en bout du pilote
+
+La qualification fonctionnelle et technique de bout en bout du pilote DiagTerritoire a été exécutée le 8 septembre 2026 sur l'environnement public qualifié.
+
+La révision réellement déployée pendant cette qualification est le commit `5a0e803453fcf5cc0841bb71ed9735d95685c47e`, correspondant à DiagTerritoire `0.3.0`.
+
+Les contrôles réalisés ont confirmé :
+
+- l'exécution de l'application depuis `/srv/diagterritoire/app` ;
+- l'état actif des services DiagTerritoire, Caddy et PostgreSQL ;
+- l'accès public HTTPS à `https://pilote.diagterritoire.fr/connexion`, avec une réponse HTTP 200 ;
+- l'utilisation de la base PostgreSQL réelle du pilote ;
+- la présence du workspace pilote Dzaoudzi-Labattoir et de ses 14 services ;
+- l'application des deux migrations Prisma versionnées ;
+- un schéma PostgreSQL déclaré à jour par Prisma ;
+- l'accès à la page de connexion sur l'hôte public ;
+- la connexion avec un compte pilote autorisé ;
+- le maintien de la session après actualisation ;
+- la déconnexion puis le refus d'accès aux routes protégées sans session.
+
+Le parcours utilisateur de référence a ensuite été exécuté sur l'hôte public avec une session authentifiée.
+
+Le parcours suivant a été validé :
+
+`Territoires -> Dzaoudzi-Labattoir -> analyse territoriale -> diagnostic -> prospective -> restitution`.
+
+La fiche territoriale de Dzaoudzi-Labattoir a chargé le diagnostic, le plan d'action territorial, les indicateurs disponibles, la projection démographique, les alertes opérationnelles et les sources de données.
+
+La restitution décisionnelle a également été générée depuis cette fiche. Le rapport territorial a chargé sa synthèse exécutive, le diagnostic, le pilotage, la prospective, les alertes et les références attendues.
+
+Un redémarrage manuel contrôlé de `diagterritoire.service` a ensuite été exécuté. Après redémarrage :
+
+- le service est revenu à l'état actif ;
+- l'accès HTTPS public a continué de répondre avec un code HTTP 200 ;
+- aucune entrée de niveau `err` n'a été enregistrée dans le journal applicatif du redémarrage ;
+- la session navigateur est restée exploitable ;
+- le rapport territorial s'est rechargé normalement ;
+- aucune perte anormale de données n'a été observée.
+
+Le contrôle final des journaux applicatifs n'a relevé aucun marqueur critique Auth.js, Prisma ou runtime parmi les erreurs recherchées. `systemctl --failed` ne signalait aucun service en échec.
+
+La sauvegarde et la restauration de la base PostgreSQL réelle avaient été qualifiées préalablement dans le cadre de l'issue #28. Les dépendances de cette qualification finale, issues #27, #28, #30 et #31, étaient fermées avec succès avant la clôture de la présente qualification.
+
+Quelques écarts mineurs ont été relevés pendant le parcours sans empêcher son exécution :
+
+- double numérotation visible dans la liste des recommandations ;
+- libellé `scénario realiste` à corriger en `scénario réaliste` ;
+- formulation de la synthèse exécutive évoquant des « priorités » alors que le compteur de priorités fortes est nul.
+
+Ces écarts sont considérés comme non bloquants pour la qualification du pilote et pourront être traités séparément.
+
+Aucun mot de passe, secret, identifiant personnel de l'utilisateur pilote, adresse IP publique ou chaîne de connexion sensible n'est conservé dans ce compte rendu.
+
+Au regard des contrôles exécutés, le pilote DiagTerritoire est qualifié de bout en bout pour le périmètre actuellement défini. Cette qualification ne constitue ni un test de charge à grande échelle, ni une validation de haute disponibilité, ni une certification générale d'un environnement de production.
