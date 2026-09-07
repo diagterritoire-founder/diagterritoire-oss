@@ -327,7 +327,7 @@ La politique `Restart=on-failure` avec un délai de 5 secondes a été validée 
 
 Un redémarrage complet de l'hôte a également été qualifié. PostgreSQL, le service applicatif et le timer de sauvegarde sont revenus automatiquement à l'état actif, aucun service système n'était signalé en échec et le contrôle HTTP local a réussi.
 
-Le port applicatif 3000 reste lié à l'interface locale et n'est pas exposé publiquement. Cette configuration est conservée jusqu'à la mise en place du reverse proxy et de TLS.
+Le port applicatif 3000 reste lié à l'interface locale et n'est pas exposé publiquement. L'accès public passe désormais exclusivement par le reverse proxy Caddy, qui relaie les requêtes vers `127.0.0.1:3000`.
 
 #### Contrôle de disponibilité
 
@@ -367,17 +367,40 @@ Pendant la qualification, aucune entrée de niveau `err` n'était présente dans
 
 Les secrets, mots de passe et chaînes de connexion sensibles ne doivent jamais être écrits dans les journaux.
 
-### 11.7 Éléments restant à qualifier
+### 11.7 Exposition publique, TLS et Auth.js
 
-Cette qualification ne constitue pas encore la validation complète de l'environnement public DiagTerritoire.
+L'exposition publique et le parcours d'authentification du pilote ont été qualifiés le 8 septembre 2026.
 
-Restent notamment à réaliser :
+Le nom d'hôte public retenu est `pilote.diagterritoire.fr`.
 
-- le choix et la configuration du nom d'hôte public ;
-- le reverse proxy ;
-- l'ouverture contrôlée des ports HTTP et HTTPS ;
-- la mise en place et le contrôle TLS ;
-- la validation Auth.js sur l'hôte public ;
-- les parcours authentifiés de bout en bout.
+L'architecture qualifiée est : Internet -> Caddy sur les ports 80/443 -> `127.0.0.1:3000` -> Next.js / DiagTerritoire.
 
-Aucun de ces éléments n'est présenté comme validé tant que son contrôle réel n'a pas été effectué.
+Caddy est exécuté comme service système permanent et assure le reverse proxy vers l'application locale. Next.js reste lié uniquement à `127.0.0.1:3000` et PostgreSQL à `127.0.0.1:5432`.
+
+Le pare-feu hôte conserve une politique entrante restrictive. Les accès publics nécessaires sont limités à SSH et aux ports TCP 80 et 443. Les ports 3000 et 5432 ne sont pas exposés publiquement.
+
+L'accès HTTP sur le port 80 redirige vers HTTPS. L'accès HTTPS à `/connexion` a été validé.
+
+TLS est géré par Caddy avec ACME. L'obtention initiale du certificat pour `pilote.diagterritoire.fr` a réussi et son cycle de vie est géré automatiquement par Caddy.
+
+Pour Auth.js, l'URL publique qualifiée est `AUTH_URL=https://pilote.diagterritoire.fr`.
+
+`AUTH_TRUST_HOST=true` est conservé intentionnellement derrière le reverse proxy Caddy contrôlé. Ce paramètre reste associé à cette architecture et ne constitue pas un contournement générique.
+
+`AUTH_SECRET` reste fourni de manière persistante hors du dépôt et sa valeur réelle n'est pas documentée.
+
+La qualification Auth.js sur l'hôte public a validé :
+
+- l'accès HTTPS à `/connexion` ;
+- la réponse de `/api/auth/session` ;
+- la redirection d'une route protégée vers `/connexion` sans session ;
+- la connexion avec un utilisateur pilote autorisé ;
+- l'accès au tableau de bord après authentification ;
+- le maintien de la session après actualisation ;
+- la déconnexion ;
+- le refus d'accès au tableau de bord après déconnexion ;
+- l'absence d'erreur Auth.js dans les journaux pendant le parcours.
+
+Aucun mot de passe, secret d'authentification ni identifiant personnel utilisé pendant la qualification n'est versionné.
+
+Ces contrôles qualifient l'exposition publique, TLS et l'authentification Auth.js du pilote pour le périmètre de déploiement actuellement retenu.
