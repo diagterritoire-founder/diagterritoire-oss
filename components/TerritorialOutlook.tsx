@@ -39,6 +39,10 @@ function projectionName(indicatorId: string): string {
     : indicatorId;
 }
 
+function scenarioLabel(scenario: string): string {
+  return scenario === "realiste" ? "réaliste" : scenario;
+}
+
 export default function TerritorialOutlook({
   projections,
   alerts,
@@ -67,7 +71,7 @@ export default function TerritorialOutlook({
               {formatNumber(projection.projectedValue)}
             </p>
             <p className="mt-1 text-sm text-cyan-100">
-              habitants, scénario {projection.scenario}
+              habitants, scénario {scenarioLabel(projection.scenario)}
             </p>
 
             <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-white/15 pt-4 text-sm">

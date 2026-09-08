@@ -326,7 +326,7 @@ export default function TerritorialDiagnostic({
           Recommandations
         </h2>
 
-        <ol className="mt-4 space-y-3">
+        <ol className="mt-4 list-none space-y-3">
           {diagnostic.recommendations.map(
             (recommendation, index) => (
               <li
