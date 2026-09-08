@@ -1,7 +1,12 @@
+import { randomUUID } from "node:crypto";
+
 import { prisma } from "@/lib/prisma";
 import {
   WorkspaceContributionEngine,
 } from "@/core/engines/WorkspaceContributionEngine";
+import {
+  WorkspaceRepository,
+} from "@/core/repositories/WorkspaceRepository";
 import {
   WorkspaceContributionRepository,
 } from "@/core/repositories/WorkspaceContributionRepository";
@@ -11,8 +16,27 @@ import {
 } from "@/core/session/WorkspaceSession";
 import type {
   ContributionStatus,
+  ContributionType,
   WorkspacePermission,
 } from "@/types/workspace";
+
+export type ContributionDraftInput = {
+  territoryId: string;
+  serviceId: string;
+  type: ContributionType;
+  title: string;
+  description?: string;
+  source?: string;
+  referencePeriod?: string;
+};
+
+export type UpdateContributionDraftInput = {
+  type: ContributionType;
+  title: string;
+  description?: string;
+  source?: string;
+  referencePeriod?: string;
+};
 
 type TransitionableStatus =
   | "submitted"
@@ -41,6 +65,184 @@ function permissionForTransition(
 }
 
 export class WorkspaceContributionService {
+  static async createDraft(
+    session: WorkspaceSession,
+    input: ContributionDraftInput,
+  ) {
+    const workspaceResult =
+      await WorkspaceRepository.findService(
+        input.territoryId,
+        input.serviceId,
+      );
+
+    if (!workspaceResult) {
+      throw new Error(
+        "Espace métier ou service introuvable.",
+      );
+    }
+
+    const {
+      workspace,
+      service,
+      source,
+    } = workspaceResult;
+
+    if (source !== "database") {
+      throw new Error(
+        "La création d'une contribution nécessite un espace métier persisté en base.",
+      );
+    }
+
+    if (
+      session.workspaceId !== workspace.id
+    ) {
+      throw new Error(
+        "Le service appartient à un autre espace.",
+      );
+    }
+
+    if (
+      !WorkspaceSessionService.canAccessService(
+        session,
+        service.id,
+      )
+    ) {
+      throw new Error(
+        "Accès interdit à ce service.",
+      );
+    }
+
+    if (
+      !WorkspaceSessionService.can(
+        session,
+        "contribution:create",
+        service.id,
+      )
+    ) {
+      throw new Error(
+        "Permission refusée : contribution:create.",
+      );
+    }
+
+    const contribution =
+      WorkspaceContributionEngine.create({
+        id: randomUUID(),
+        workspaceId: workspace.id,
+        serviceId: service.id,
+        territoryId: workspace.territoryId,
+        organizationId:
+          workspace.organizationId,
+        authorUserId: session.user.id,
+        type: input.type,
+        title: input.title,
+        description: input.description,
+        source: input.source,
+        referencePeriod:
+          input.referencePeriod,
+      });
+
+    return WorkspaceContributionRepository.create(
+      contribution,
+    );
+  }
+
+  static async updateDraft(
+    session: WorkspaceSession,
+    contributionId: string,
+    input: UpdateContributionDraftInput,
+  ) {
+    const result =
+      await WorkspaceContributionRepository.findById(
+        contributionId,
+      );
+
+    if (!result) {
+      throw new Error(
+        "Contribution introuvable.",
+      );
+    }
+
+    const contribution =
+      result.contribution;
+
+    if (
+      session.workspaceId !==
+      contribution.workspaceId
+    ) {
+      throw new Error(
+        "La contribution appartient à un autre espace.",
+      );
+    }
+
+    if (
+      !WorkspaceSessionService.canAccessService(
+        session,
+        contribution.serviceId,
+      )
+    ) {
+      throw new Error(
+        "Accès interdit à ce service.",
+      );
+    }
+
+    if (
+      !WorkspaceSessionService.can(
+        session,
+        "contribution:update",
+        contribution.serviceId,
+      )
+    ) {
+      throw new Error(
+        "Permission refusée : contribution:update.",
+      );
+    }
+
+    if (
+      contribution.authorUserId !==
+      session.user.id
+    ) {
+      throw new Error(
+        "Seul l'auteur peut modifier ce brouillon.",
+      );
+    }
+
+    const workspaceResult =
+      await WorkspaceRepository.findService(
+        contribution.territoryId,
+        contribution.serviceId,
+      );
+
+    if (
+      !workspaceResult ||
+      workspaceResult.source !== "database" ||
+      workspaceResult.workspace.id !==
+        contribution.workspaceId
+    ) {
+      throw new Error(
+        "La modification nécessite un espace métier persisté en base.",
+      );
+    }
+
+    const updated =
+      WorkspaceContributionEngine.updateDraft(
+        contribution,
+        input,
+      );
+
+    const persisted =
+      await WorkspaceContributionRepository.updateDraft(
+        updated,
+      );
+
+    if (!persisted) {
+      throw new Error(
+        "Le brouillon a été modifié entre-temps ou n'est plus modifiable. Rechargez la page.",
+      );
+    }
+
+    return persisted;
+  }
+
   static async transition(
     session: WorkspaceSession,
     contributionId: string,

@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 
 import DashboardLayout from "@/components/DashboardLayout";
 import {
+  createContributionDraftAction,
+} from "./actions";
+import {
   CurrentWorkspaceSession,
 } from "@/core/session/CurrentWorkspaceSession";
 import {
@@ -86,6 +89,14 @@ export default async function ContributionsPage({
       service.id,
     );
 
+  const canCreate =
+    source === "database" &&
+    WorkspaceSessionService.can(
+      session,
+      "contribution:create",
+      service.id,
+    );
+
   const submitted =
     contributions.filter(
       (contribution) =>
@@ -144,6 +155,122 @@ export default async function ContributionsPage({
             </Link>
           </div>
         </section>
+
+        {canCreate ? (
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700">
+              Nouvelle contribution
+            </p>
+
+            <h2 className="mt-1 text-xl font-bold text-slate-950">
+              Créer un brouillon
+            </h2>
+
+            <p className="mt-2 text-sm text-slate-500">
+              Préparez une contribution métier avant de la soumettre au circuit de validation.
+            </p>
+
+            <form
+              action={createContributionDraftAction}
+              className="mt-6 grid gap-5 md:grid-cols-2"
+            >
+              <input
+                type="hidden"
+                name="territoryId"
+                value={territory.id}
+              />
+
+              <input
+                type="hidden"
+                name="serviceId"
+                value={service.id}
+              />
+
+              <label className="space-y-2">
+                <span className="text-sm font-semibold text-slate-700">
+                  Type
+                </span>
+
+                <select
+                  name="type"
+                  defaultValue="observation"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950"
+                >
+                  <option value="indicator">Indicateur</option>
+                  <option value="project">Projet</option>
+                  <option value="action">Action</option>
+                  <option value="document">Document</option>
+                  <option value="event">Événement</option>
+                  <option value="alert">Alerte</option>
+                  <option value="observation">Observation</option>
+                  <option value="other">Autre</option>
+                </select>
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-semibold text-slate-700">
+                  Titre
+                </span>
+
+                <input
+                  type="text"
+                  name="title"
+                  required
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-950"
+                  placeholder="Objet de la contribution"
+                />
+              </label>
+
+              <label className="space-y-2 md:col-span-2">
+                <span className="text-sm font-semibold text-slate-700">
+                  Description
+                </span>
+
+                <textarea
+                  name="description"
+                  rows={4}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-950"
+                  placeholder="Éléments utiles à la contribution"
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-semibold text-slate-700">
+                  Période de référence
+                </span>
+
+                <input
+                  type="text"
+                  name="referencePeriod"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-950"
+                  placeholder="Ex. 2026-T3"
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-semibold text-slate-700">
+                  Source métier
+                </span>
+
+                <input
+                  type="text"
+                  name="source"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-950"
+                  placeholder="Ex. Service finances"
+                />
+              </label>
+
+              <div className="md:col-span-2">
+                <button
+                  type="submit"
+                  className="rounded-xl bg-cyan-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-cyan-800"
+                >
+                  Créer le brouillon
+                </button>
+              </div>
+            </form>
+          </section>
+        ) : null}
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <article className="rounded-2xl bg-white p-5 shadow-sm">
