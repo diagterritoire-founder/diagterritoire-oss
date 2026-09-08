@@ -6,6 +6,9 @@ import {
   transitionContributionAction,
 } from "./actions";
 import {
+  updateContributionDraftAction,
+} from "../actions";
+import {
   CurrentWorkspaceSession,
 } from "@/core/session/CurrentWorkspaceSession";
 import {
@@ -132,6 +135,16 @@ export default async function ContributionDetailPage({
   ) {
     notFound();
   }
+
+  const canUpdate =
+    source === "database" &&
+    contribution.status === "draft" &&
+    contribution.authorUserId === session.user.id &&
+    WorkspaceSessionService.can(
+      session,
+      "contribution:update",
+      service.id,
+    );
 
   const canSubmit =
     contribution.status === "draft" &&
@@ -266,6 +279,116 @@ export default async function ContributionDetailPage({
             </p>
           </article>
         </section>
+
+        {canUpdate ? (
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700">
+              Brouillon
+            </p>
+
+            <h2 className="mt-1 text-xl font-bold text-slate-950">
+              Modifier la contribution
+            </h2>
+
+            <p className="mt-2 text-sm text-slate-500">
+              Les informations restent modifiables tant que la contribution est au statut brouillon.
+            </p>
+
+            <form
+              action={updateContributionDraftAction}
+              className="mt-6 grid gap-5 md:grid-cols-2"
+            >
+              <input
+                type="hidden"
+                name="contributionId"
+                value={contribution.id}
+              />
+
+              <label className="space-y-2">
+                <span className="text-sm font-semibold text-slate-700">
+                  Type
+                </span>
+
+                <select
+                  name="type"
+                  defaultValue={contribution.type}
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950"
+                >
+                  <option value="indicator">Indicateur</option>
+                  <option value="project">Projet</option>
+                  <option value="action">Action</option>
+                  <option value="document">Document</option>
+                  <option value="event">Événement</option>
+                  <option value="alert">Alerte</option>
+                  <option value="observation">Observation</option>
+                  <option value="other">Autre</option>
+                </select>
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-semibold text-slate-700">
+                  Titre
+                </span>
+
+                <input
+                  type="text"
+                  name="title"
+                  required
+                  defaultValue={contribution.title}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-950"
+                />
+              </label>
+
+              <label className="space-y-2 md:col-span-2">
+                <span className="text-sm font-semibold text-slate-700">
+                  Description
+                </span>
+
+                <textarea
+                  name="description"
+                  rows={4}
+                  defaultValue={contribution.description ?? ""}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-950"
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-semibold text-slate-700">
+                  Période de référence
+                </span>
+
+                <input
+                  type="text"
+                  name="referencePeriod"
+                  defaultValue={contribution.referencePeriod ?? ""}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-950"
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-semibold text-slate-700">
+                  Source métier
+                </span>
+
+                <input
+                  type="text"
+                  name="source"
+                  defaultValue={contribution.source ?? ""}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-950"
+                />
+              </label>
+
+              <div className="md:col-span-2">
+                <button
+                  type="submit"
+                  className="rounded-xl bg-cyan-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-cyan-800"
+                >
+                  Enregistrer le brouillon
+                </button>
+              </div>
+            </form>
+          </section>
+        ) : null}
 
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">

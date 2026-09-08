@@ -23,6 +23,15 @@ export type CreateWorkspaceContributionInput = {
   createdAt?: string;
 };
 
+export type UpdateWorkspaceContributionDraftInput = {
+  type: WorkspaceContribution["type"];
+  title: string;
+  description?: string;
+  source?: string;
+  referencePeriod?: string;
+  updatedAt?: string;
+};
+
 export type ContributionTransitionResult = {
   contribution: WorkspaceContribution;
   historyEntry: ContributionHistoryEntry;
@@ -52,16 +61,54 @@ export class WorkspaceContributionEngine {
       authorUserId: input.authorUserId,
       type: input.type,
       title,
-      description: input.description?.trim(),
+      description:
+        input.description?.trim() || undefined,
       status: "draft",
       indicatorId: input.indicatorId,
       projectId: input.projectId,
       knowledgeId: input.knowledgeId,
       exchangeId: input.exchangeId,
-      source: input.source?.trim(),
-      referencePeriod: input.referencePeriod,
+      source:
+        input.source?.trim() || undefined,
+      referencePeriod:
+        input.referencePeriod?.trim() || undefined,
       createdAt,
       updatedAt: createdAt,
+    };
+  }
+
+  static updateDraft(
+    contribution: WorkspaceContribution,
+    input: UpdateWorkspaceContributionDraftInput,
+  ): WorkspaceContribution {
+    if (contribution.status !== "draft") {
+      throw new Error(
+        "Seul un brouillon peut être modifié.",
+      );
+    }
+
+    const title = input.title.trim();
+
+    if (!title) {
+      throw new Error(
+        "Le titre de la contribution est obligatoire.",
+      );
+    }
+
+    const updatedAt =
+      input.updatedAt ?? new Date().toISOString();
+
+    return {
+      ...contribution,
+      type: input.type,
+      title,
+      description:
+        input.description?.trim() || undefined,
+      source:
+        input.source?.trim() || undefined,
+      referencePeriod:
+        input.referencePeriod?.trim() || undefined,
+      updatedAt,
     };
   }
 

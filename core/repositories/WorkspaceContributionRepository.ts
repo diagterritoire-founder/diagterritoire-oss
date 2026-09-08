@@ -96,6 +96,115 @@ function toHistoryEntry(
 }
 
 export class WorkspaceContributionRepository {
+  static async create(
+    contribution: WorkspaceContribution,
+  ): Promise<WorkspaceContribution> {
+    const created =
+      await prisma.workspaceContribution.create({
+        data: {
+          id: contribution.id,
+          workspaceId: contribution.workspaceId,
+          serviceId: contribution.serviceId,
+          territoryId: contribution.territoryId,
+          organizationId:
+            contribution.organizationId,
+          authorUserId:
+            contribution.authorUserId,
+          validatorUserId:
+            contribution.validatorUserId ?? null,
+          type: contribution.type,
+          title: contribution.title,
+          description:
+            contribution.description ?? null,
+          status: contribution.status,
+          indicatorId:
+            contribution.indicatorId ?? null,
+          projectId:
+            contribution.projectId ?? null,
+          knowledgeId:
+            contribution.knowledgeId ?? null,
+          exchangeId:
+            contribution.exchangeId ?? null,
+          source:
+            contribution.source ?? null,
+          referencePeriod:
+            contribution.referencePeriod ?? null,
+          createdAt: new Date(
+            contribution.createdAt,
+          ),
+          updatedAt: new Date(
+            contribution.updatedAt,
+          ),
+          submittedAt:
+            contribution.submittedAt
+              ? new Date(
+                  contribution.submittedAt,
+                )
+              : null,
+          validatedAt:
+            contribution.validatedAt
+              ? new Date(
+                  contribution.validatedAt,
+                )
+              : null,
+          publishedAt:
+            contribution.publishedAt
+              ? new Date(
+                  contribution.publishedAt,
+                )
+              : null,
+        },
+      });
+
+    return toContribution(created);
+  }
+
+  static async updateDraft(
+    contribution: WorkspaceContribution,
+  ): Promise<WorkspaceContribution | null> {
+    const result =
+      await prisma.workspaceContribution.updateMany({
+        where: {
+          id: contribution.id,
+          workspaceId:
+            contribution.workspaceId,
+          serviceId:
+            contribution.serviceId,
+          authorUserId:
+            contribution.authorUserId,
+          status: "draft",
+        },
+        data: {
+          type: contribution.type,
+          title: contribution.title,
+          description:
+            contribution.description ?? null,
+          source:
+            contribution.source ?? null,
+          referencePeriod:
+            contribution.referencePeriod ?? null,
+          updatedAt: new Date(
+            contribution.updatedAt,
+          ),
+        },
+      });
+
+    if (result.count !== 1) {
+      return null;
+    }
+
+    const updated =
+      await prisma.workspaceContribution.findUnique({
+        where: {
+          id: contribution.id,
+        },
+      });
+
+    return updated
+      ? toContribution(updated)
+      : null;
+  }
+
   static async findByService(
     workspaceId: string,
     serviceId: string,
