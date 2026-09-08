@@ -75,7 +75,8 @@ export default async function ReportPage({
     (alert) => alert.level !== "information",
   ).length;
 
-  const priorityNames = [...result.diagnostic.actions]
+  const strongPriorityNames = result.diagnostic.actions
+    .filter((action) => action.priority === "forte")
     .sort((a, b) => a.score - b.score)
     .slice(0, 3)
     .map((action) => action.indicatorName);
@@ -88,8 +89,8 @@ export default async function ReportPage({
     }).format(value);
 
   const prioritySentence =
-    priorityNames.length > 0
-      ? `Les priorités portent principalement sur ${priorityNames.join(
+    strongPriorityNames.length > 0
+      ? `Les priorités fortes portent principalement sur ${strongPriorityNames.join(
           ", ",
         )}.`
       : "Aucune priorité forte n’est actuellement identifiée.";
