@@ -129,7 +129,7 @@ Le tag `v0.2.0` ne doit être créé qu'après validation du commit final sur
 
 ## v0.3.0 — Livrabilité opérationnelle du pilote
 
-**Statut : cadrage**
+**Statut : publiée le 6 septembre 2026**
 
 La version `v0.3.0` vise à transformer le socle fonctionnel consolidé
 dans `v0.2.0` en un pilote exécutable, vérifiable et déployable de
@@ -238,3 +238,160 @@ La version pourra être considérée comme candidate à publication lorsque :
 
 Le tag `v0.3.0` ne doit être créé qu'après validation du commit final sur
 `main`.
+
+
+---
+
+## v0.4.0 — Exploitation métier du pilote
+
+**Statut : cadrage**
+
+La version `v0.4.0` vise à transformer l’Espace Métiers déjà présent
+dans DiagTerritoire en un circuit fonctionnel réellement exploitable par
+une collectivité pilote.
+
+Cette version ne vise pas à activer simultanément tous les modules métier
+présents dans l’interface.
+
+## Objectif principal v0.4.0
+
+Permettre à un utilisateur autorisé de produire une contribution métier,
+de la faire circuler dans un workflow contrôlé, de la publier puis de la
+rendre exploitable dans le pilotage territorial sans contourner les règles
+d’accès, de validation ou de traçabilité.
+
+Le parcours cible est :
+
+**agent → espace métier → contribution → validation → publication → consolidation → restitution**
+
+## Périmètre v0.4.0
+
+### 1. Contribution métier exploitable
+
+Compléter le parcours de contribution afin de permettre notamment :
+
+- la création explicite d’une contribution par un utilisateur autorisé ;
+- la modification d’un brouillon par son auteur selon les droits applicables ;
+- la saisie des informations métier nécessaires : type, titre, description,
+  période de référence et source ;
+- le rattachement fiable de la contribution au workspace, au territoire,
+  au service et à son auteur ;
+- la conservation des contributions dans PostgreSQL.
+
+Les données pilotes ou seeds ne doivent pas constituer le seul moyen
+d’obtenir une contribution exploitable.
+
+### 2. Workflow et droits d’accès
+
+Stabiliser le circuit déjà présent autour des statuts et permissions
+existants.
+
+Le parcours doit garantir notamment :
+
+- la soumission d’un brouillon par un utilisateur autorisé ;
+- la prise en examen par un utilisateur disposant du droit correspondant ;
+- la validation ou le rejet selon les permissions du service ;
+- la publication d’une contribution validée ;
+- le refus explicite des transitions non autorisées ;
+- la conservation de l’historique des changements de statut ;
+- l’isolation entre services, workspaces et territoires.
+
+Les règles métier doivent être contrôlées côté serveur et ne pas dépendre
+uniquement de l’affichage des boutons dans l’interface.
+
+### 3. Consolidation des contributions publiées
+
+Définir un mécanisme explicite permettant de distinguer :
+
+- les contributions encore en préparation ;
+- les contributions en cours de validation ;
+- les contributions publiées et donc exploitables par le pilotage.
+
+Une contribution non publiée ne doit jamais être intégrée silencieusement
+dans une restitution territoriale.
+
+La v0.4.0 doit introduire au minimum une lecture consolidée des contributions
+publiées à l’échelle du service ou du territoire.
+
+Toute alimentation automatique d’un indicateur territorial canonique doit
+rester hors du circuit tant que sa règle de validation n’est pas définie
+explicitement.
+
+### 4. Parcours utilisateur de l’Espace Métiers
+
+Rendre le parcours principal lisible et utilisable depuis l’interface :
+
+- accès à l’Espace Métiers selon la session ;
+- ouverture d’un service autorisé ;
+- consultation des contributions ;
+- création et modification lorsque permises ;
+- consultation du statut et de la traçabilité ;
+- réalisation des actions de workflow autorisées ;
+- retour cohérent vers le service et le territoire.
+
+Les libellés techniques ou liés à un fournisseur d’infrastructure ne doivent
+pas apparaître comme information métier lorsqu’ils ne sont pas utiles à
+l’utilisateur.
+
+### 5. Tests et validation
+
+Étendre les contrôles automatisés au parcours métier introduit par cette
+version.
+
+Les tests doivent couvrir notamment :
+
+- les permissions d’accès aux services ;
+- les transitions autorisées et interdites ;
+- la création et la modification d’un brouillon ;
+- la soumission, l’examen, la validation, le rejet et la publication ;
+- la traçabilité des changements de statut ;
+- l’isolation entre services et territoires ;
+- la lecture consolidée des seules contributions publiées ;
+- les principaux cas d’erreur.
+
+Les validations de livraison existantes restent applicables :
+tests, build de production, runtime, PostgreSQL, audit des dépendances,
+CodeQL et contrôles de la CI.
+
+## Hors périmètre de v0.4.0
+
+Ne font pas partie de cette version :
+
+- l’extension géographique hors du pilote actuel ;
+- l’activation complète simultanée des modules Indicateurs,
+  Projets et actions, Documents, Alertes et Validations ;
+- une refonte générale de l’interface ;
+- une refonte complète de l’authentification ;
+- l’ajout d’un SSO institutionnel ;
+- une GED complète ;
+- un moteur complet de gestion de projets ;
+- l’intégration massive de nouvelles sources de données ;
+- la modification automatique d’indicateurs territoriaux à partir
+  d’une contribution non validée ;
+- une nouvelle architecture d’infrastructure sans besoin démontré.
+
+## Critères de sortie v0.4.0
+
+La version pourra être considérée comme candidate à publication lorsque :
+
+1. un utilisateur autorisé peut créer et modifier un brouillon ;
+2. le parcours brouillon → soumission → examen → validation ou rejet →
+   publication fonctionne selon les permissions prévues ;
+3. une transition interdite est refusée côté serveur ;
+4. l’historique de traitement est conservé ;
+5. les contributions restent isolées selon leur workspace, territoire
+   et service ;
+6. une lecture consolidée n’utilise que les contributions publiées ;
+7. le parcours métier principal est validé de bout en bout avec un
+   utilisateur pilote ;
+8. les tests automatisés du workflow sont au vert ;
+9. le build et le runtime de production restent validés ;
+10. PostgreSQL, la CI, l’audit des dépendances et CodeQL restent dans
+    un état acceptable ;
+11. aucune donnée personnelle sensible, aucun secret ni identifiant
+    d’infrastructure inutile n’est introduit dans le dépôt ;
+12. le changelog et la documentation décrivent exactement les capacités
+    effectivement livrées.
+
+Le tag `v0.4.0` ne doit être créé qu’après validation du commit final
+sur `main`.
