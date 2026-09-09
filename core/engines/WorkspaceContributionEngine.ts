@@ -37,6 +37,39 @@ export type ContributionTransitionResult = {
   historyEntry: ContributionHistoryEntry;
 };
 
+export const WORKSPACE_CONTRIBUTION_TRANSITIONS: Readonly<
+  Record<
+    ContributionStatus,
+    readonly ContributionStatus[]
+  >
+> = {
+  draft: [
+    "submitted",
+    "archived",
+  ],
+  submitted: [
+    "in_review",
+    "rejected",
+    "archived",
+  ],
+  in_review: [
+    "validated",
+    "rejected",
+  ],
+  validated: [
+    "published",
+    "archived",
+  ],
+  rejected: [
+    "draft",
+    "archived",
+  ],
+  published: [
+    "archived",
+  ],
+  archived: [],
+};
+
 export class WorkspaceContributionEngine {
   static create(
     input: CreateWorkspaceContributionInput,
@@ -239,38 +272,7 @@ export class WorkspaceContributionEngine {
     currentStatus: ContributionStatus,
     nextStatus: ContributionStatus,
   ): boolean {
-    const transitions: Record<
-      ContributionStatus,
-      ContributionStatus[]
-    > = {
-      draft: [
-        "submitted",
-        "archived",
-      ],
-      submitted: [
-        "in_review",
-        "rejected",
-        "archived",
-      ],
-      in_review: [
-        "validated",
-        "rejected",
-      ],
-      validated: [
-        "published",
-        "archived",
-      ],
-      rejected: [
-        "draft",
-        "archived",
-      ],
-      published: [
-        "archived",
-      ],
-      archived: [],
-    };
-
-    return transitions[
+    return WORKSPACE_CONTRIBUTION_TRANSITIONS[
       currentStatus
     ].includes(nextStatus);
   }

@@ -7,27 +7,9 @@ import {
   CurrentWorkspaceSession,
 } from "@/core/session/CurrentWorkspaceSession";
 import {
+  isContributionTransitionTarget,
   WorkspaceContributionService,
 } from "@/core/services/WorkspaceContributionService";
-
-const allowedStatuses = [
-  "submitted",
-  "in_review",
-  "validated",
-  "rejected",
-  "published",
-] as const;
-
-type AllowedStatus =
-  (typeof allowedStatuses)[number];
-
-function isAllowedStatus(
-  value: string,
-): value is AllowedStatus {
-  return allowedStatuses.includes(
-    value as AllowedStatus,
-  );
-}
 
 export async function transitionContributionAction(
   formData: FormData,
@@ -49,7 +31,9 @@ export async function transitionContributionAction(
 
   if (
     typeof nextStatus !== "string" ||
-    !isAllowedStatus(nextStatus)
+    !isContributionTransitionTarget(
+      nextStatus,
+    )
   ) {
     throw new Error(
       "Transition demandée invalide.",

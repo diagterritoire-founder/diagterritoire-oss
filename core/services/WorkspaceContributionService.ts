@@ -38,12 +38,24 @@ export type UpdateContributionDraftInput = {
   referencePeriod?: string;
 };
 
-type TransitionableStatus =
-  | "submitted"
-  | "in_review"
-  | "validated"
-  | "rejected"
-  | "published";
+export const CONTRIBUTION_TRANSITION_TARGETS = [
+  "submitted",
+  "in_review",
+  "validated",
+  "rejected",
+  "published",
+] as const;
+
+export type TransitionableStatus =
+  (typeof CONTRIBUTION_TRANSITION_TARGETS)[number];
+
+export function isContributionTransitionTarget(
+  value: string,
+): value is TransitionableStatus {
+  return (
+    CONTRIBUTION_TRANSITION_TARGETS as readonly string[]
+  ).includes(value);
+}
 
 function permissionForTransition(
   nextStatus: TransitionableStatus,
@@ -246,9 +258,19 @@ export class WorkspaceContributionService {
   static async transition(
     session: WorkspaceSession,
     contributionId: string,
-    nextStatus: TransitionableStatus,
+    nextStatus: ContributionStatus,
     comment?: string,
   ) {
+    if (
+      !isContributionTransitionTarget(
+        nextStatus,
+      )
+    ) {
+      throw new Error(
+        "Transition demandée invalide.",
+      );
+    }
+
     const result =
       await WorkspaceContributionRepository.findById(
         contributionId,
@@ -268,7 +290,30 @@ export class WorkspaceContributionService {
       contribution.workspaceId
     ) {
       throw new Error(
-        "La contribution appartient à un autre espace.",
+        "Contribution inaccessible dans cet espace.",
+      );
+    }
+
+    const workspaceResult =
+      await WorkspaceRepository.findService(
+        contribution.territoryId,
+        contribution.serviceId,
+      );
+
+    if (
+      !workspaceResult ||
+      workspaceResult.source !== "database" ||
+      workspaceResult.workspace.id !==
+        contribution.workspaceId ||
+      workspaceResult.workspace.territoryId !==
+        contribution.territoryId ||
+      workspaceResult.workspace.organizationId !==
+        contribution.organizationId ||
+      workspaceResult.service.workspaceId !==
+        contribution.workspaceId
+    ) {
+      throw new Error(
+        "Contexte de contribution invalide ou inaccessible.",
       );
     }
 
@@ -313,7 +358,7 @@ export class WorkspaceContributionService {
     const transition =
       WorkspaceContributionEngine.transition(
         contribution,
-        nextStatus as ContributionStatus,
+        nextStatus,
         session.user.id,
         comment,
       );
@@ -327,8 +372,19 @@ export class WorkspaceContributionService {
           await tx.workspaceContribution.updateMany({
             where: {
               id: contribution.id,
+              workspaceId:
+                contribution.workspaceId,
+              serviceId:
+                contribution.serviceId,
+              territoryId:
+                contribution.territoryId,
+              organizationId:
+                contribution.organizationId,
               status:
                 contribution.status,
+              updatedAt: new Date(
+                contribution.updatedAt,
+              ),
             },
             data: {
               status: updated.status,
