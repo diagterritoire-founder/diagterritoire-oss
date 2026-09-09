@@ -4,6 +4,32 @@ import type {
   WorkspaceContribution,
 } from "@/types/workspace";
 
+export type PublishedContributionScope = {
+  workspaceId: string;
+  territoryId: string;
+  serviceId?: string;
+};
+
+export type PublishedContributionRecord = {
+  id: string;
+  workspaceId: string;
+  serviceId: string;
+  territoryId: string;
+  organizationId: string;
+  status: "published";
+  type: WorkspaceContribution["type"];
+  title: string;
+  description?: string;
+  referencePeriod?: string;
+  source?: string;
+  author: {
+    id: string;
+    displayName: string;
+    title?: string;
+  };
+  publishedAt: string | null;
+};
+
 function toContribution(
   value: {
     id: string;
@@ -222,6 +248,89 @@ export class WorkspaceContributionRepository {
 
     return contributions.map(
       toContribution,
+    );
+  }
+
+  static async findPublished(
+    scope: PublishedContributionScope,
+  ): Promise<PublishedContributionRecord[]> {
+    const contributions =
+      await prisma.workspaceContribution.findMany({
+        where: {
+          workspaceId:
+            scope.workspaceId,
+          territoryId:
+            scope.territoryId,
+          status: "published",
+          ...(scope.serviceId !== undefined
+            ? {
+                serviceId:
+                  scope.serviceId,
+              }
+            : {}),
+        },
+        select: {
+          id: true,
+          workspaceId: true,
+          serviceId: true,
+          territoryId: true,
+          organizationId: true,
+          type: true,
+          title: true,
+          description: true,
+          referencePeriod: true,
+          source: true,
+          publishedAt: true,
+          author: {
+            select: {
+              id: true,
+              displayName: true,
+              title: true,
+            },
+          },
+        },
+        orderBy: [
+          {
+            publishedAt: "desc",
+          },
+          {
+            id: "asc",
+          },
+        ],
+      });
+
+    return contributions.map(
+      (value) => ({
+        id: value.id,
+        workspaceId:
+          value.workspaceId,
+        serviceId:
+          value.serviceId,
+        territoryId:
+          value.territoryId,
+        organizationId:
+          value.organizationId,
+        status: "published",
+        type:
+          value.type as WorkspaceContribution["type"],
+        title: value.title,
+        description:
+          value.description ?? undefined,
+        referencePeriod:
+          value.referencePeriod ?? undefined,
+        source:
+          value.source ?? undefined,
+        author: {
+          id: value.author.id,
+          displayName:
+            value.author.displayName,
+          title:
+            value.author.title ?? undefined,
+        },
+        publishedAt:
+          value.publishedAt?.toISOString() ??
+          null,
+      }),
     );
   }
 
