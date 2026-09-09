@@ -6,6 +6,9 @@ import {
   WorkspaceRepository,
 } from "@/core/repositories/WorkspaceRepository";
 import {
+  WorkspaceAccessEngine,
+} from "@/core/engines/WorkspaceAccessEngine";
+import {
   CurrentWorkspaceSession,
 } from "@/core/session/CurrentWorkspaceSession";
 import {
@@ -115,7 +118,6 @@ export default async function ServiceWorkspacePage({
     workspace,
     service,
     services,
-    source,
   } = result;
 
   if (
@@ -139,31 +141,34 @@ export default async function ServiceWorkspacePage({
     notFound();
   }
 
+  const accessibleServices =
+    WorkspaceAccessEngine.filterAccessibleServices(
+      session.user,
+      services,
+    );
+
   const children =
-    services.filter(
+    accessibleServices.filter(
       (candidate) =>
         candidate.parentServiceId ===
-          service.id &&
-        candidate.status === "active",
+        service.id,
     );
 
   const parent =
     service.parentServiceId
-      ? services.find(
+      ? accessibleServices.find(
           (candidate) =>
             candidate.id ===
-              service.parentServiceId &&
-            candidate.status === "active",
+            service.parentServiceId,
         )
       : undefined;
 
   const siblingCount =
     service.parentServiceId
-      ? services.filter(
+      ? accessibleServices.filter(
           (candidate) =>
             candidate.parentServiceId ===
-              service.parentServiceId &&
-            candidate.status === "active",
+            service.parentServiceId,
         ).length
       : 0;
 
@@ -253,10 +258,7 @@ export default async function ServiceWorkspacePage({
             </p>
 
             <p className="mt-2 text-xs text-cyan-700">
-              Source :{" "}
-              {source === "database"
-                ? "Neon"
-                : "secours local"}
+              Les actions disponibles dépendent de vos droits.
             </p>
           </article>
         </section>

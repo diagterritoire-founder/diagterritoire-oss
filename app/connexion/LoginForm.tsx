@@ -65,7 +65,7 @@ export function LoginForm() {
       }
 
       window.location.assign(
-        "/dashboard",
+        "/espace-metiers",
       );
     } catch {
       setError(

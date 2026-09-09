@@ -21,6 +21,16 @@ type WorkspacePageProps = {
   }>;
 };
 
+const roleLabels: Record<string, string> = {
+  executive: "Direction",
+  general_management: "Direction générale",
+  service_manager: "Responsable de service",
+  contributor: "Contributeur",
+  validator: "Validateur",
+  observer: "Observateur",
+  administrator: "Administrateur",
+};
+
 const serviceIcons: Record<string, string> = {
   general_management: "⌘",
   finance: "€",
@@ -65,7 +75,6 @@ export default async function WorkspacePage({
   const {
     workspace,
     services: activeServices,
-    source,
   } = workspaceResult;
 
   const session =
@@ -84,16 +93,29 @@ export default async function WorkspacePage({
       activeServices,
     );
 
+  const accessibleServiceIds =
+    new Set(
+      accessibleServices.map(
+        (service) => service.id,
+      ),
+    );
+
   const rootServices =
     accessibleServices.filter(
       (service) =>
-        !service.parentServiceId,
+        !service.parentServiceId ||
+        !accessibleServiceIds.has(
+          service.parentServiceId,
+        ),
     );
 
   const childServices =
     accessibleServices.filter(
       (service) =>
-        service.parentServiceId,
+        service.parentServiceId &&
+        accessibleServiceIds.has(
+          service.parentServiceId,
+        ),
     );
 
   return (
@@ -141,7 +163,12 @@ export default async function WorkspacePage({
           </p>
 
           <p className="mt-1 text-sm text-slate-600">
-            {session.user.roles.join(", ")}
+            {session.user.roles
+              .map(
+                (role) =>
+                  roleLabels[role] ?? role,
+              )
+              .join(", ")}
           </p>
         </section>
 
@@ -181,7 +208,7 @@ export default async function WorkspacePage({
               Pilote actif
             </p>
             <p className="mt-2 text-xs text-cyan-700">
-              Source : {source === "database" ? "Neon" : "secours local"}
+              Les services affichés correspondent à vos droits actuels.
             </p>
           </article>
         </section>

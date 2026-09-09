@@ -15,6 +15,9 @@ import {
   WorkspaceContributionRepository,
 } from "@/core/repositories/WorkspaceContributionRepository";
 import {
+  WorkspaceUserRepository,
+} from "@/core/repositories/WorkspaceUserRepository";
+import {
   WorkspaceRepository,
 } from "@/core/repositories/WorkspaceRepository";
 import {
@@ -89,6 +92,30 @@ export default async function ContributionsPage({
       service.id,
     );
 
+  const workspaceUsers =
+    await WorkspaceUserRepository.findActiveByWorkspace(
+      workspace.id,
+    );
+
+  const userDisplayNames =
+    new Map<string, string>(
+      workspaceUsers.map(
+        (user) =>
+          [
+            user.id,
+            user.displayName,
+          ] as const,
+      ),
+    );
+
+  const displayUserName = (
+    userId?: string,
+  ) =>
+    userId
+      ? userDisplayNames.get(userId) ??
+        "Utilisateur"
+      : "Non attribué";
+
   const canCreate =
     source === "database" &&
     WorkspaceSessionService.can(
@@ -140,10 +167,7 @@ export default async function ContributionsPage({
               </p>
 
               <p className="mt-3 text-xs text-slate-400">
-                Source :{" "}
-                {source === "database"
-                  ? "Neon"
-                  : "secours local"}
+                Les informations affichées relèvent du périmètre de ce service.
               </p>
             </div>
 
@@ -307,6 +331,19 @@ export default async function ContributionsPage({
             <p className="mt-2 text-3xl font-bold text-slate-950">
               {published}
             </p>
+
+            <Link
+              href={
+                "/espace-metiers/" +
+                territory.id +
+                "/" +
+                service.id +
+                "/contributions/publiees"
+              }
+              className="mt-3 inline-flex text-sm font-semibold text-cyan-800 transition hover:text-cyan-950"
+            >
+              Voir la lecture consolidée →
+            </Link>
           </article>
         </section>
 
@@ -383,7 +420,9 @@ export default async function ContributionsPage({
                       <p>
                         Auteur :{" "}
                         <span className="font-semibold text-slate-800">
-                          {contribution.authorUserId}
+                          {displayUserName(
+                            contribution.authorUserId,
+                          )}
                         </span>
                       </p>
                     </div>

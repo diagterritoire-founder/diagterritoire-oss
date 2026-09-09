@@ -18,6 +18,9 @@ import {
   WorkspaceContributionRepository,
 } from "@/core/repositories/WorkspaceContributionRepository";
 import {
+  WorkspaceUserRepository,
+} from "@/core/repositories/WorkspaceUserRepository";
+import {
   WorkspaceRepository,
 } from "@/core/repositories/WorkspaceRepository";
 import {
@@ -136,6 +139,30 @@ export default async function ContributionDetailPage({
     notFound();
   }
 
+  const workspaceUsers =
+    await WorkspaceUserRepository.findActiveByWorkspace(
+      workspace.id,
+    );
+
+  const userDisplayNames =
+    new Map<string, string>(
+      workspaceUsers.map(
+        (user) =>
+          [
+            user.id,
+            user.displayName,
+          ] as const,
+      ),
+    );
+
+  const displayUserName = (
+    userId?: string,
+  ) =>
+    userId
+      ? userDisplayNames.get(userId) ??
+        "Utilisateur"
+      : "Non attribué";
+
   const canUpdate =
     source === "database" &&
     contribution.status === "draft" &&
@@ -221,10 +248,7 @@ export default async function ContributionDetailPage({
               </p>
 
               <p className="mt-3 text-xs text-slate-400">
-                Source des données :{" "}
-                {source === "database"
-                  ? "Neon"
-                  : "secours local"}
+                Cette contribution relève du périmètre de ce service.
               </p>
             </div>
 
@@ -560,7 +584,9 @@ export default async function ContributionDetailPage({
                   Auteur
                 </p>
                 <p className="mt-1 font-semibold text-slate-950">
-                  {contribution.authorUserId}
+                  {displayUserName(
+                    contribution.authorUserId,
+                  )}
                 </p>
               </div>
 
@@ -569,8 +595,9 @@ export default async function ContributionDetailPage({
                   Validateur
                 </p>
                 <p className="mt-1 font-semibold text-slate-950">
-                  {contribution.validatorUserId ??
-                    "Non attribué"}
+                  {displayUserName(
+                    contribution.validatorUserId,
+                  )}
                 </p>
               </div>
 
@@ -646,7 +673,9 @@ export default async function ContributionDetailPage({
                   <p className="mt-2 text-sm text-slate-500">
                     Acteur :{" "}
                     <span className="font-semibold text-slate-700">
-                      {entry.actorUserId}
+                      {displayUserName(
+                        entry.actorUserId,
+                      )}
                     </span>
                   </p>
 
