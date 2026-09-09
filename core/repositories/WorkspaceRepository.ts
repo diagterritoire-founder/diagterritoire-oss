@@ -141,6 +141,59 @@ export class WorkspaceRepository {
     }
   }
 
+  static async findById(
+    workspaceId: string,
+  ): Promise<WorkspaceWithServices | null> {
+    try {
+      const result =
+        await prisma.workspace.findFirst({
+          where: {
+            id: workspaceId,
+            status: "active",
+          },
+          include: {
+            services: {
+              where: {
+                status: "active",
+              },
+              orderBy: {
+                name: "asc",
+              },
+            },
+          },
+        });
+
+      if (!result) {
+        return workspaceId ===
+          dzaoudziLabattoirWorkspace.id
+          ? getPilotFallback(
+              dzaoudziLabattoirWorkspace.territoryId,
+            )
+          : null;
+      }
+
+      return {
+        workspace: toWorkspace(result),
+        services: result.services.map(
+          toWorkspaceService,
+        ),
+        source: "database",
+      };
+    } catch (error) {
+      console.error(
+        "WorkspaceRepository.findById:",
+        error,
+      );
+
+      return workspaceId ===
+        dzaoudziLabattoirWorkspace.id
+        ? getPilotFallback(
+            dzaoudziLabattoirWorkspace.territoryId,
+          )
+        : null;
+    }
+  }
+
   static async findService(
     territoryId: string,
     serviceId: string,
