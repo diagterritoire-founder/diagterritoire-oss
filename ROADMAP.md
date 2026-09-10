@@ -244,7 +244,7 @@ Le tag `v0.3.0` ne doit être créé qu'après validation du commit final sur
 
 ## v0.4.0 — Exploitation métier du pilote
 
-**Statut : cadrage**
+**Statut : qualification finale en cours — issue #44**
 
 La version `v0.4.0` vise à transformer l’Espace Métiers déjà présent
 dans DiagTerritoire en un circuit fonctionnel réellement exploitable par

@@ -5,6 +5,38 @@ Open Source de DiagTerritoire.
 
 ## Non publié
 
+### Candidat v0.4.0 — qualification finale en cours
+
+#### Espace Métiers
+
+- accès à l’Espace Métiers depuis une session authentifiée ;
+- ouverture du territoire et des seuls services autorisés pour l’utilisateur ;
+- parcours lisible entre territoire, service, contributions et restitution.
+
+#### Contributions métier
+
+- création d’une contribution métier sans dépendre d’un seed ;
+- modification d’un brouillon par un utilisateur autorisé ;
+- rattachement au workspace, au territoire, au service et à l’auteur ;
+- conservation des contributions dans PostgreSQL.
+
+#### Workflow et traçabilité
+
+- prise en charge du parcours brouillon → soumission → examen → validation ou rejet → publication ;
+- contrôle côté serveur des permissions et des transitions de statut ;
+- conservation de l’historique des changements de statut ;
+- isolation des contributions entre services, territoires et workspaces.
+
+#### Consolidation
+
+- ajout d’une lecture consolidée des contributions publiées ;
+- exclusion des contributions non publiées de la consolidation métier.
+
+#### Validation
+
+- ajout et extension des tests automatisés du parcours de contribution, du workflow et de la consolidation ;
+- qualification finale de la v0.4.0 en cours avant publication.
+
 ## 0.3.0 — 2026-09-06
 
 ### Intégration continue
