@@ -49,6 +49,8 @@ Docker n’est pas requis pour un déploiement hors Dev Container si une instanc
 
 - `DATABASE_URL` : URL de connexion vers une instance PostgreSQL réelle et accessible. Elle est utilisée par Prisma, les migrations, le seed et les contrôles du pilote.
 - `AUTH_SECRET` : secret d’authentification Auth.js à fournir pour un déploiement réel. Le secret éphémère généré par `npm run runtime:check` est réservé au smoke test et ne doit pas être utilisé comme secret de production.
+- `DT_PILOT_CONTRIBUTOR_PASSWORD` : mot de passe du compte contributeur utilisé lors de l'initialisation du pilote. Sa valeur réelle doit rester hors du dépôt.
+- `DT_PILOT_VALIDATOR_PASSWORD` : mot de passe du compte validateur utilisé lors de l'initialisation du pilote. Sa valeur réelle doit rester hors du dépôt.
 
 ### 4.2 Variables optionnelles
 
