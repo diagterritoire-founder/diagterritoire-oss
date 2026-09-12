@@ -1,6 +1,11 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
 
+const pilotUserIds = [
+  "user-pilot-finances-contributor",
+  "user-pilot-finances-validator",
+] as const;
+
 async function main() {
   const connectionString =
     process.env.DATABASE_URL;
@@ -47,6 +52,47 @@ async function main() {
           "service-education",
       );
 
+    const pilotUsers =
+      await prisma.workspaceUser.findMany({
+        where: {
+          id: {
+            in: [...pilotUserIds],
+          },
+        },
+        include: {
+          credential: true,
+        },
+      });
+
+    const usersById =
+      new Map(
+        pilotUsers.map(
+          (user) => [user.id, user] as const,
+        ),
+      );
+
+    for (const userId of pilotUserIds) {
+      const user = usersById.get(userId);
+
+      if (!user) {
+        throw new Error(
+          `Utilisateur pilote introuvable : ${userId}`,
+        );
+      }
+
+      if (user.status !== "active") {
+        throw new Error(
+          `Utilisateur pilote inactif : ${userId}`,
+        );
+      }
+
+      if (!user.credential) {
+        throw new Error(
+          `Credential pilote absent : ${userId}`,
+        );
+      }
+    }
+
     console.log("\n--- WORKSPACE ---");
     console.log(workspace.name);
     console.log(
@@ -88,6 +134,18 @@ async function main() {
     ) {
       console.log(
         `- ${service.name}`,
+      );
+    }
+
+    console.log(
+      "\n--- UTILISATEURS PILOTES ---",
+    );
+
+    for (const userId of pilotUserIds) {
+      const user = usersById.get(userId)!;
+
+      console.log(
+        `- ${user.email} : actif, credential present`,
       );
     }
   } finally {
