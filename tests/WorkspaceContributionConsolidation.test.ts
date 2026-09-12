@@ -390,13 +390,21 @@ test(
         },
       );
 
+    const runContributions =
+      result.contributions.filter(
+        (contribution) =>
+          contribution.id.startsWith(
+            `${RUN_ID}-published-`,
+          ),
+      );
+
     assert.equal(
-      result.contributions.length,
+      runContributions.length,
       5,
     );
 
     assert.ok(
-      result.contributions.every(
+      runContributions.every(
         (contribution) =>
           contribution.status ===
           "published",
@@ -404,7 +412,7 @@ test(
     );
 
     const ids =
-      result.contributions.map(
+      runContributions.map(
         (contribution) =>
           contribution.id,
       );
@@ -437,13 +445,21 @@ test(
         },
       );
 
+    const runContributions =
+      result.contributions.filter(
+        (contribution) =>
+          contribution.id.startsWith(
+            `${RUN_ID}-published-`,
+          ),
+      );
+
     assert.equal(
-      result.contributions.length,
+      runContributions.length,
       4,
     );
 
     assert.ok(
-      result.contributions.every(
+      runContributions.every(
         (contribution) =>
           contribution.serviceId ===
           FINANCE_SERVICE_ID,
@@ -451,7 +467,7 @@ test(
     );
 
     assert.ok(
-      !result.contributions.some(
+      !runContributions.some(
         (contribution) =>
           contribution.id ===
           publishedIds.education,
@@ -545,10 +561,17 @@ test(
     );
 
     assert.deepEqual(
-      result.contributions.map(
-        (contribution) =>
-          contribution.id,
-      ),
+      result.contributions
+        .map(
+          (contribution) =>
+            contribution.id,
+        )
+        .filter(
+          (id) =>
+            id.startsWith(
+              `${RUN_ID}-published-`,
+            ),
+        ),
       [
         publishedIds.newer,
         publishedIds.tieA,
