@@ -2,8 +2,15 @@
 
 import Link from "next/link";
 import {
+  useRouter,
+} from "next/navigation";
+import {
   useState,
 } from "react";
+
+import {
+  signOut,
+} from "next-auth/react";
 
 type HeaderProps = {
   eyebrow?: string;
@@ -28,8 +35,29 @@ export default function Header({
   title,
   description,
 }: HeaderProps) {
+  const router = useRouter();
+
   const [menuOpen, setMenuOpen] =
     useState(false);
+
+  const [signingOut, setSigningOut] =
+    useState(false);
+
+  async function handleSignOut() {
+    setSigningOut(true);
+
+    try {
+      await signOut({
+        redirect: false,
+      });
+
+      router.replace(
+        "/connexion",
+      );
+    } catch {
+      setSigningOut(false);
+    }
+  }
 
   return (
     <header className="border-b border-slate-200 bg-white px-5 py-4 sm:px-8">
@@ -71,6 +99,17 @@ export default function Header({
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {signingOut
+              ? "Déconnexion..."
+              : "Déconnexion"}
+          </button>
+
           <button
             type="button"
             className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
