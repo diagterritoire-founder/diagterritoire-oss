@@ -1,0 +1,35 @@
+{
+  "workspace": {
+    "id": "workspace-test-52-pamandzi",
+    "organizationId": "organization-test-52-pamandzi",
+    "territoryId": "territory-commune-pamandzi",
+    "name": "Recette isolée #52 — Pamandzi",
+    "slug": "test-52-pamandzi"
+  },
+  "services": [
+    {
+      "id": "workspace-test-52-pamandzi-finances",
+      "name": "Finances",
+      "slug": "finances",
+      "category": "finance"
+    }
+  ],
+  "users": [
+    {
+      "id": "workspace-test-52-pamandzi-contributor",
+      "email": "contributeur-52@example.invalid",
+      "displayName": "Contributeur de recette",
+      "roles": ["contributor"],
+      "serviceIds": ["workspace-test-52-pamandzi-finances"],
+      "passwordEnv": "DT_PROVISION_TEST_CONTRIBUTOR_PASSWORD"
+    },
+    {
+      "id": "workspace-test-52-pamandzi-validator",
+      "email": "validateur-52@example.invalid",
+      "displayName": "Validateur de recette",
+      "roles": ["validator"],
+      "serviceIds": ["workspace-test-52-pamandzi-finances"],
+      "passwordEnv": "DT_PROVISION_TEST_VALIDATOR_PASSWORD"
+    }
+  ]
+}
