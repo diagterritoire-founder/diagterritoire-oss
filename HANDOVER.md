@@ -1,0 +1,95 @@
+# DiagTerritoire — Fiche de préparation à la remise
+
+Statut : préparation ; aucune réception ni mise en production prononcée.
+Référence : issue #52.
+Ce modèle public reste sans secrets ni coordonnées personnelles.
+Compléter la fiche nominative hors du dépôt public.
+
+## 1. Version et destination
+
+| Élément | Référence |
+| --- | --- |
+| Dépôt | diagterritoire-founder/diagterritoire-oss |
+| Release historique | v0.4.0 — 12 septembre 2026 |
+| SHA candidat examiné | ce3b4f1b2cab89e98cd28dcf6764e2e7c35a83eb |
+| Cible proposée | Pilote existant — à confirmer |
+| Collectivité destinataire | À renseigner |
+| URL et environnement de remise | À renseigner hors dépôt public |
+| SHA réellement installé | À relever sur l'instance cible |
+| Version/tag finalement remis | À décider selon MAINTENANCE.md |
+| Date et décision de réception | À renseigner après recette |
+
+Le SHA candidat est postérieur à v0.4.0. Le tag existant ne doit pas
+être déplacé. Le build Codespaces qualifié ne constitue pas un artefact
+de production à remettre.
+
+## 2. Documents de référence
+
+- DELIVERY.md : guides, rôles, limites et preuves de qualification.
+- PROVISIONING.md : ouverture initiale paramétrable d'un workspace.
+- DEPLOYMENT.md : installation, exploitation et qualification historique.
+- SUPPORT.md : signalement et limites des engagements de support.
+- SECURITY.md : canal privé de signalement des vulnérabilités.
+- MAINTENANCE.md : versions et mises à jour.
+
+## 3. Acquis réutilisables
+
+| Domaine | Preuve disponible | Portée |
+| --- | --- | --- |
+| Ouverture initiale | Provisionnement, rollback, rejeu et collisions testés | Bases locales isolées |
+| Comptes et rôles | Connexion contributeur et validateur, parcours distincts | Recette Pamandzi |
+| Parcours métier | Brouillon, modification, soumission, examen, validation, publication et rejet | Navigateur, données fictives |
+| Consolidation | Inclusion des publiées, exclusion des non-publiées et rejetées | Navigateur et tests |
+| Contrôles de droits | 13 tests workflow/consolidation et test supplémentaire de modification par un tiers | Services applicatifs |
+| Déconnexion | Accès direct, actualisation et navigation testés renvoient à Connexion | Deux rôles ; réserve de retour arrière |
+| Reprise PostgreSQL | Dump, checksum, restauration, sept tables identiques et lecture applicative | Copie locale isolée |
+| CI de la PR #59 | Quatre contrôles réussis avant fusion | Ne vaut pas recette de l'instance cible |
+
+Les sections 14 à 17 de DELIVERY.md précisent les versions, environnements
+et limites. Aucun contrôle n'est présenté comme exécuté sur l'instance
+de remise lorsqu'il a été réalisé uniquement dans Codespaces.
+
+## 4. Conditions restantes avant remise
+
+| Condition | Action attendue |
+| --- | --- |
+| Installation reproductible | Vérifier les configurations de service, proxy, environnement et sauvegarde ; exécuter la procédure sur une instance neuve |
+| Instance cible | Confirmer destination, URL HTTPS, SHA installé et configuration réelle |
+| Secrets | AUTH_SECRET durable et secrets hors Git ; session pilote désactivée |
+| Comptes réels | Approuver rôles et services ; transmettre les accès par canal sécurisé |
+| Administration courante | Formaliser modification des affectations, désactivation et réinitialisation des comptes |
+| Exploitation | Désigner responsable métier, administrateur, exploitant et contact support |
+| Sauvegarde durable | Fixer stockage protégé hors machine, rétention, surveillance et responsables |
+| Reprise cible | Définir perte de données et interruption admissibles ; vérifier la procédure adaptée à la cible |
+| Qualification finale | Rattacher contrôles techniques et parcours authentifiés au SHA et à l'instance remis |
+| Confidentialité | Relire les pièces de remise et le diff final |
+| Réserves | Corriger ou faire accepter explicitement les limites applicables |
+
+Les coordonnées et choix propres au destinataire sont conservés dans
+la fiche interne. Aucun SLA ni astreinte n'est présumé.
+
+## 5. Réserves et limites
+
+- Après déconnexion, le retour arrière peut réafficher l'ancienne page
+  Finances. L'actualisation et la navigation testées exigent une connexion.
+  L'affichage résiduel reste à traiter ou à accepter explicitement.
+- Les essais des services ne prouvent pas à eux seuls tous les refus HTTP.
+- Le provisionnement initial ne gère ni les mises à jour des comptes,
+  ni leur réactivation, ni la réinitialisation des mots de passe.
+- Les modules affichés « en préparation » restent hors du parcours livré.
+- La reprise isolée ne qualifie pas la perte complète d'un hôte,
+  la haute disponibilité ni des objectifs contractuels de reprise.
+- Les tests de provisionnement .mjs ont des résultats séparés ;
+  leur exécution ne doit pas être déduite de la seule CI existante.
+
+## 6. Décision
+
+Décision actuelle : remise non prononcée ; issue #52 ouverte.
+
+À compléter dans la fiche interne :
+- responsable ayant vérifié chaque condition ;
+- références des preuves sur l'instance cible ;
+- réserves, décision et responsable de leur traitement ;
+- accord du destinataire, date, version et SHA acceptés.
+
+Cette fiche n'élargit pas le périmètre fonctionnel.
