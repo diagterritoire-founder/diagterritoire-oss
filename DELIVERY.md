@@ -306,3 +306,57 @@ cette réserve avant remise. Aucun contournement des droits côté serveur
 n'a été démontré par ces seuls essais.
 
 L'issue #52 reste ouverte.
+
+## 16. Contrôles complémentaires des droits — 16 septembre 2026
+
+### Navigation après déconnexion
+
+Sur la recette navigateur décrite en section 14, le contributeur puis
+le validateur ont ouvert le module Contributions depuis l'ancienne page
+Finances réaffichée après déconnexion et retour arrière, sans actualisation
+préalable. Dans les deux cas, la navigation a renvoyé vers Connexion.
+
+Ce résultat complète la section 15. La réserve d'affichage résiduel demeure.
+Aucune tentative de mutation depuis un formulaire restauré après déconnexion
+n'a été réalisée dans ce contrôle.
+
+### Tests automatisés des services
+
+Commit testé : 3dc43e8c58962703c3c041c7824d9778caf2009d.
+
+Environnement : base locale dédiée diagterritoire_access_test_52,
+distincte de la base de recette navigateur.
+Les deux migrations versionnées ont été appliquées, puis le seed pilote
+a été exécuté avec des mots de passe aléatoires non affichés.
+
+Fichiers exécutés avec tsx --test :
+- tests/WorkspaceContributionWorkflow.test.ts ;
+- tests/WorkspaceContributionConsolidation.test.ts.
+
+Résultat communiqué par l'opérateur : 13 tests réussis, 0 échec,
+0 test ignoré.
+
+| Périmètre | Contrôles réussis |
+| --- | --- |
+| Workflow | Soumission, examen, validation et publication |
+| Rejet | Depuis les statuts soumis et en examen |
+| Transition incohérente | Refus sans ajout d'historique |
+| Autre contributeur | Soumission du brouillon d'un autre auteur refusée |
+| Autre workspace | Mutation refusée |
+| Service hors périmètre | Refus |
+| Territoire incohérent | Refus avant mutation |
+| Consolidation | Contributions publiées du bon workspace et territoire |
+| Filtre service | Exclusion des autres services |
+| Restitution | Métadonnées conservées, ordre stable et résultat vide prévisible |
+
+Ces preuves portent sur les services appelés par les tests existants.
+Elles ne constituent pas des essais des routes HTTP ou des Server Actions
+avec une session hors périmètre. Le refus de modification du contenu d'un
+brouillon par un tiers reste à vérifier : le test exécuté porte sur sa
+soumission. L'absence d'ajout d'historique est explicitement confirmée ici
+pour la transition incohérente ; ne pas généraliser cette conclusion
+aux autres refus sans examiner leurs assertions.
+
+Aucun nouveau test, changement applicatif ou déploiement de production
+n'a été effectué pour ce complément. Les autres réserves des sections
+12, 14 et 15 restent applicables. L'issue #52 reste ouverte.
