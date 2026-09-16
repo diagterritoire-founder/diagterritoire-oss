@@ -205,3 +205,71 @@ Lecture au commit `040eff6ea3fc0e51a6b1edd1e7d2a5e5ad18e7f1` :
 - `scripts/backup-postgresql.sh` et `scripts/restore-postgresql.sh` : garanties et limites des opérations PostgreSQL.
 
 Vérification documentaire : cohérence des guides avec ces sources et distinction des qualifications historiques. Aucun test applicatif, déploiement, sauvegarde ou restauration n'a été exécuté pour produire ce dossier.
+
+## 14. Recette navigateur isolée — 16 septembre 2026
+
+Ce complément consigne les essais réalisés après la rédaction initiale.
+Les résultats proviennent des sorties du Codespace et des pages transmises
+par l'opérateur pendant la recette manuelle.
+
+### Environnement et version
+
+- Commit de base : 4e59f85b558b6d76ad1cdff647b576ff0e7e7705.
+- Branche : fix/52-codespaces-server-actions.
+- Modification locale testée : next.config.ts, non encore commitée.
+- Base isolée : diagterritoire_browser_test_52.
+- Collectivité fictive de recette : Pamandzi ; service : Finances.
+- Comptes distincts : contributeur et validateur de recette.
+- Serveur Next.js en mode production sur le port privé 3200 du Codespace.
+- Session pilote désactivée ; aucun déploiement de production effectué.
+
+### Résultats observés
+
+| Contrôle | Résultat |
+| --- | --- |
+| Connexion contributeur et accès Finances | Réussi |
+| Création puis modification d'un brouillon | Réussi ; contenu modifié affiché |
+| Soumission par le contributeur | Réussi ; aucune action ensuite proposée à ce rôle |
+| Prise en examen par le validateur | Réussi ; validateur attribué |
+| Validation puis publication | Réussi ; quatre transitions tracées avec leurs acteurs |
+| Contribution validée non publiée | Absente de la lecture consolidée |
+| Contribution publiée | Présente dans la consolidation avec contenu, auteur et date |
+| Rejet d'une seconde contribution soumise | Réussi ; transition attribuée au validateur |
+| Exclusion de la contribution rejetée | Réussie ; consolidation limitée à la contribution publiée |
+| Déconnexion | Page Connexion observée ; accès direct après déconnexion à confirmer explicitement |
+| Build avec option de recette | Réussi ; 19/19 pages générées |
+| Lint ciblé next.config.ts et git diff --check | Réussis |
+
+### Incident et configuration de recette
+
+La création a initialement été bloquée par une différence entre Origin
+(localhost:3200) et X-Forwarded-Host (adresse du Codespace).
+La configuration testée ajoute uniquement localhost:3200 aux origines
+autorisées des Server Actions lorsque CODESPACES=true et
+DT_CODESPACES_RECIPE=true. Ces conditions étaient activées au build et
+au démarrage de la recette. Aucun joker de domaine n'est ajouté.
+Ce réglage ne constitue pas une configuration de production qualifiée.
+
+Les mots de passe des deux comptes fictifs ont été réinitialisés dans la
+base isolée, par saisie masquée, sans être conservés dans le dépôt.
+Le secret de session temporaire change au redémarrage du serveur de recette ;
+une reconnexion est alors nécessaire.
+
+### Réserves et suites
+
+- Conserver le commit final du correctif et ses résultats CI après revue.
+- Documenter l'activation de cette configuration au build et au démarrage ;
+  ne pas réutiliser ce build de recette pour la remise en production.
+- Confirmer l'accès direct et le retour navigateur après déconnexion
+  pour les deux rôles.
+- Vérifier les refus effectifs côté serveur : modification par un tiers,
+  accès hors service/workspace et historique inchangé lors des refus.
+- Vérifier la persistance après redémarrage sur cette base de recette.
+- Les tests de provisionnement .mjs restent exécutés séparément :
+  leur exécution n'est pas démontrée par la seule CI existante.
+- Installation par un tiers, reprise de l'instance remise, exploitation,
+  contacts, version finale et acceptation des réserves restent à qualifier
+  selon la section 12.
+
+Cette recette complète les preuves historiques ; elle ne prononce pas
+la remise aux collectivités. L'issue #52 reste ouverte.
