@@ -728,3 +728,35 @@ test(
     );
   },
 );
+
+test(
+  "un autre contributeur ne peut pas modifier le brouillon de son auteur",
+  async () => {
+    const { contribution } =
+      await createFinanceDraft("modification par un tiers");
+
+    const otherContributor =
+      await requireSession(OTHER_CONTRIBUTOR_ID);
+
+    const before =
+      await WorkspaceContributionRepository.findById(contribution.id);
+    assert.ok(before);
+
+    await assert.rejects(
+      () => WorkspaceContributionService.updateDraft(
+        otherContributor,
+        contribution.id,
+        {
+          type: "observation",
+          title: "Modification interdite",
+          description: "Ce contenu ne doit pas être enregistré.",
+        },
+      ),
+      /Seul l'auteur peut modifier ce brouillon/i,
+    );
+
+    const after =
+      await WorkspaceContributionRepository.findById(contribution.id);
+    assert.deepEqual(after, before);
+  },
+);

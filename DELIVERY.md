@@ -360,3 +360,66 @@ aux autres refus sans examiner leurs assertions.
 Aucun nouveau test, changement applicatif ou déploiement de production
 n'a été effectué pour ce complément. Les autres réserves des sections
 12, 14 et 15 restent applicables. L'issue #52 reste ouverte.
+
+## 17. Contrôle auteur et reprise isolée — 16 septembre 2026
+
+### Refus de modification par un tiers
+
+Base de code : 7e6bedafc0eee7e1d5f3bd0ef564dd8922a9d6ac,
+avec ajout local d'un test dans WorkspaceContributionWorkflow.test.ts.
+Sur diagterritoire_access_test_52, le test ciblé réussit :
+un autre contributeur ne peut pas modifier le brouillon de son auteur.
+La contribution et son historique sont comparés avant et après le refus
+par égalité complète du résultat du repository.
+Résultat : 1 test réussi, aucun échec. Lint ciblé et diff --check réussis.
+Cette preuve porte sur le service ; elle ne constitue pas un essai HTTP.
+
+### Sauvegarde et restauration
+
+Les scripts existants ont été exécutés avec PostgreSQL client 16.15 :
+- source : diagterritoire_browser_test_52 ;
+- dump : diagterritoire-20260916T194146Z.dump, stocké hors dépôt ;
+- cible neuve : diagterritoire_restore_test_52 ;
+- checksum vérifié avec succès avant restauration ;
+- restauration terminée sans migration ni seed supplémentaire.
+
+Comparaison en lecture seule de toutes les lignes des sept tables publiques :
+
+| Table | Source / copie | Résultat |
+| --- | --- | --- |
+| Workspace | 1 / 1 | Identiques |
+| WorkspaceService | 1 / 1 | Identiques |
+| WorkspaceUser | 2 / 2 | Identiques |
+| WorkspaceCredential | 2 / 2 | Identiques |
+| WorkspaceContribution | 2 / 2 | Identiques |
+| ContributionHistoryEntry | 6 / 6 | Identiques |
+| _prisma_migrations | 2 / 2 | Identiques |
+
+Aucune valeur de credential n'a été affichée dans le compte rendu.
+
+### Lecture applicative après restauration
+
+Le serveur de recette a été arrêté, puis démarré sur la copie restaurée
+avec le même build décrit en section 14, sur le port privé 3200.
+La session pilote est désactivée. La page Connexion répond HTTP 200.
+
+Les pages communiquées après reprise montrent :
+- la contribution publiée et sa description modifiée ;
+- ses quatre transitions, acteurs et dates conservés ;
+- une seule contribution dans la lecture consolidée, celle publiée.
+
+La présence des deux contributions est établie par la comparaison des
+tables. La fiche de la contribution rejetée n'a pas été retransmise
+dans ce contrôle navigateur.
+
+### Portée et réserves
+
+Cet exercice vérifie une sauvegarde, une restauration complète des données
+publiques et leur lecture applicative sur une copie locale isolée.
+Il ne qualifie pas la reprise de l'instance effectivement remise,
+la perte complète d'un hôte, le stockage hors machine ou un délai de reprise.
+Le dump temporaire ne constitue pas une politique de sauvegarde durable.
+
+La réserve d'affichage après retour arrière et les autres limites
+non levées des sections précédentes restent applicables.
+L'issue #52 reste ouverte.
