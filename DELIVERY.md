@@ -273,3 +273,36 @@ une reconnexion est alors nécessaire.
 
 Cette recette complète les preuves historiques ; elle ne prononce pas
 la remise aux collectivités. L'issue #52 reste ouverte.
+
+## 15. Contrôle de déconnexion — 16 septembre 2026
+
+Complément aux réserves de la section 14, sur la même instance de recette
+isolée et avec les comptes contributeur et validateur distincts.
+Le dépôt a été synchronisé sur le commit de fusion
+c8d74b7ab4a3611fabc28e26ab6888aeee6db95e.
+Le serveur utilise toujours le build de recette décrit en section 14 ;
+aucun nouveau build ni redémarrage n'a été réalisé pour ces contrôles.
+
+| Contrôle après déconnexion | Contributeur | Validateur |
+| --- | --- | --- |
+| Ouverture directe de l'adresse protégée | Retour à Connexion | Retour à Connexion |
+| Retour arrière du navigateur | Ancienne page Finances réaffichée | Ancienne page Finances réaffichée |
+| Actualisation de cette page | Retour à Connexion | Retour à Connexion |
+
+L'accès direct et le rechargement des pages protégées sont donc vérifiés
+pour les deux rôles. La réserve de confirmation de ces essais en section 14
+est remplacée par les résultats ci-dessus.
+
+Une réserve demeure : le retour arrière réaffiche des informations de
+l'ancienne page Finances, y compris l'en-tête Déconnexion.
+Ce comportement est compatible avec une restauration depuis un cache
+du navigateur ou de l'application ; son mécanisme exact n'a pas été établi.
+Il ne démontre pas une session encore active. Il ne permet pas non plus
+de déclarer l'affichage après déconnexion entièrement qualifié.
+
+Restent à examiner : l'accès aux contributions et les actions depuis une
+page ainsi réaffichée, puis le traitement ou l'acceptation explicite de
+cette réserve avant remise. Aucun contournement des droits côté serveur
+n'a été démontré par ces seuls essais.
+
+L'issue #52 reste ouverte.
