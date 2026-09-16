@@ -1,8 +1,8 @@
 # DiagTerritoire — Dossier de remise aux collectivités
 
-Version documentaire : projet du 13 septembre 2026 — issue #52.
+Version documentaire : rédaction initiale du 13 septembre 2026, complétée par les qualifications du 16 septembre 2026 — issue #52.
 Statut : prêt pour revue documentaire ; ne vaut pas procès-verbal de recette.
-Destination proposée : `DELIVERY.md`, à la racine de la branche `docs/52-dossier-remise`.
+Document intégré au dépôt. Voir HANDOVER.md pour la synthèse de préparation à la remise ; les références historiques ci-dessous restent conservées.
 
 ## 1. Objet et références de version
 
@@ -83,7 +83,7 @@ Les boutons dépendent du statut et des droits. En cas de modification concurren
 
 À la prise en charge, vérifier la fiche de remise, les comptes, leurs statuts actifs, les rôles cumulés et les affectations aux services. Tester les accès attendus et les refus hors périmètre. Distinguer le rôle applicatif administrator des privilèges système de l'exploitant.
 
-Le provisionnement générique, la modification des droits et la réinitialisation individuelle des identifiants restent à formaliser et qualifier avant une remise autonome. Le seed existant est spécifique au pilote et réapplique les mots de passe des deux comptes pilotes : ne pas l'utiliser comme outil de gestion courante d'une autre collectivité.
+Le provisionnement initial paramétrable est documenté dans PROVISIONING.md et vérifié en environnement isolé. La modification des droits, la désactivation des comptes et la réinitialisation individuelle des mots de passe restent à formaliser et qualifier pour l'exploitation courante. Le seed existant est spécifique au pilote et réapplique les mots de passe des deux comptes pilotes : ne pas l'utiliser comme outil de gestion courante d'une autre collectivité.
 
 Sur le pilote utilisant les noms de services documentés, l'exploitant habilité peut consulter :
 
@@ -127,7 +127,7 @@ npm run runtime:check
 
 Exécuter les étapes séparément, contrôler leur succès et arrêter au premier échec. Le smoke test démarre puis arrête un processus temporaire ; le service systemd reste nécessaire au fonctionnement permanent. Tester ensuite HTTPS et les comptes réels. Ne pas utiliser les tests et seeds pilotes sur une base métier en service.
 
-Pour une autre collectivité, collecter organisation, territoire existant dans le référentiel, workspace, services et comptes ; vérifier l'unicité des identifiants et la cohérence des rattachements. L'ouverture paramétrable sans modification du code n'est pas établie par les scripts pilotes examinés. La recette #52 exige une procédure exécutable et testée pour cette étape : c'est un écart de livraison restant, pas une fonctionnalité réputée disponible.
+Pour une autre collectivité, collecter organisation, territoire existant dans le référentiel, workspace, services et comptes ; vérifier l'unicité des identifiants et la cohérence des rattachements. L'ouverture initiale paramétrable est désormais fournie par scripts/provision-workspace.mjs, selon PROVISIONING.md. Les essais isolés et la recette navigateur sont consignés dans les compléments de qualification. L'initialisation et les droits de la collectivité effectivement remise restent à vérifier sur sa cible.
 
 Il reste également à fournir les configurations d'installation du service permanent, du proxy, du fichier d'environnement et du timer adaptées à la cible, avec leurs droits et commandes de mise en place. Les descriptions historiques du pilote ne suffisent pas à prouver qu'un tiers installe seul une instance neuve.
 

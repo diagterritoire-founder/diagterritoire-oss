@@ -1,13 +1,15 @@
 # Provisionnement initial — lot #52
 
-Projet à qualifier dans le Codespace avant commit. Base du code étudiée :
-`3f23981c62394acda1c1da9258c634b5ecc520c5`. Aucun déploiement réalisé.
+Lot intégré par la PR #55. Base historique du code étudié :
+`3f23981c62394acda1c1da9258c634b5ecc520c5`.
+Les preuves isolées sont consignées ci-dessous et dans DELIVERY.md ;
+elles ne constituent pas un déploiement sur l'instance de remise.
 
 ## Installation du lot
 
-Copier les fichiers de cette archive à la racine du dépôt en conservant les dossiers
-`scripts`, `tests` et `examples`. Aucun fichier existant n'est remplacé. Aucun changement
-de package.json, de dépendance, de schéma ou de code Next.js n'est requis.
+Les fichiers scripts, tests et examples de ce lot sont intégrés au dépôt.
+Utiliser un checkout du SHA approuvé contenant la PR #55 et installer les
+dépendances verrouillées avec npm ci. Aucune archive supplémentaire n'est nécessaire.
 
 Le script `.mjs` doit être lancé avec le `tsx` déjà installé dans le dépôt, car la CLI
 importe le référentiel territorial TypeScript. Les commandes utilisent directement
@@ -15,7 +17,7 @@ importe le référentiel territorial TypeScript. Les commandes utilisent directe
 
 ## Recette isolée
 
-Exécuter dans le Codespace, sur `ops/52-provisionnement-collectivite` :
+Commandes de qualification isolée, depuis un checkout contenant le lot :
 
 ```bash
 node --test tests/provision-workspace.test.mjs
@@ -87,10 +89,12 @@ ne sont pas affichées pour éviter de révéler des valeurs sensibles.
 
 ## Qualification restante
 
-Tests purs exécutables indépendamment de PostgreSQL. Recette PostgreSQL, TypeScript,
-lint ciblé, CI et parcours navigateur à constater dans l'environnement du dépôt.
-Le lot n'est pas réputé qualifié tant que ces preuves ne sont pas enregistrées.
-Ajouter ensuite les résultats à DELIVERY.md ; l'issue #52 reste ouverte.
+Les tests purs, la recette PostgreSQL et le lint ciblé disposent des résultats
+ci-dessous. La PR #55 a passé ses contrôles CI avant fusion. Les parcours
+navigateur et leurs réserves sont consignés dans DELIVERY.md, sections 14 à 17.
+Les tests .mjs restent exécutés séparément de npm test ; une CI verte ne prouve
+pas leur exécution. La qualification de l'instance cible reste à réaliser.
+L'issue #52 reste ouverte.
 Une ouverture avec comptes réels demande une validation connexion, accès aux services,
 contribution, validation/publication et déconnexion, sur l'instance cible.
 
@@ -103,4 +107,6 @@ contribution, validation/publication et déconnexion, sur l'instance cible.
 
 Les données de recette sont conservées dans la base isolée.
 Aucun déploiement de production effectué.
-La recette navigateur et les contrôles CI restent à réaliser.
+Au 13 septembre, la recette navigateur et les contrôles CI restaient à réaliser.
+Les résultats ultérieurs sont référencés dans la section Qualification restante
+et dans DELIVERY.md. Voir HANDOVER.md pour les conditions actuelles de remise.
