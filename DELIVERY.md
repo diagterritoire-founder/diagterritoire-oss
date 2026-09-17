@@ -480,6 +480,44 @@ le pilote existant. Le cycle complet de mutation des contributions
 n'a pas été rejoué dans ce contrôle.
 La réserve liée au retour arrière du navigateur n'est pas levée par
 ces essais d'accès direct.
-L'installation neuve par un tiers, les autres conditions de HANDOVER.md
+Les contrôles propres à une instance cible réelle, les autres conditions de HANDOVER.md
 et la réception par le destinataire restent à traiter.
+L'issue #52 reste ouverte.
+
+## 19. Audit de confidentialité du dépôt — 17 septembre 2026
+
+L'audit a été réalisé sur le dépôt suivi par Git à partir du SHA
+`f3a1e096b2d9e7ee192028d967a3295aaa442b57`, après fusion de la PR #67.
+
+### Contrôles réalisés
+
+- les contrôles GitHub du SHA examiné sont réussis :
+  Delivery validation, Analyze (actions) et Analyze (javascript-typescript) ;
+- aucun fichier secret usuel suivi par Git n'a été détecté parmi les
+  fichiers `.env` de production ou locaux, clés privées, certificats
+  personnels ou clés SSH recherchés ;
+- aucun motif de clé privée ou de token à forte confiance recherché
+  n'a été détecté dans l'arbre courant ;
+- le même ensemble de motifs à forte confiance n'a pas été détecté
+  dans l'historique Git analysé ;
+- aucun motif d'IBAN français n'a été détecté ;
+- les longues suites numériques détectées par le contrôle étaient
+  contenues dans des SHA Git ou dans des fichiers de verrouillage exclus
+  de ce contrôle de données personnelles.
+
+Le fichier local `provisionnement-52.patch` reste non suivi par Git.
+Il ne fait donc pas partie du dépôt public ni de cette preuve portant
+sur les éléments versionnés.
+
+### Portée et limites
+
+Cet audit vise des motifs techniques déterminés et les fichiers suivis
+par Git. Il ne constitue pas une garantie absolue d'absence de toute
+information sensible qui ne correspondrait pas aux motifs recherchés.
+
+Les données, secrets et coordonnées propres à une collectivité destinataire
+doivent rester hors du dépôt public et être transmis selon les procédures
+de remise prévues. Les contrôles propres à l'instance cible et aux pièces
+nominatives de réception restent distincts.
+
 L'issue #52 reste ouverte.
