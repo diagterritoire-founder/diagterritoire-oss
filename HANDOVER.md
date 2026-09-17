@@ -43,9 +43,10 @@ Le SHA technique qualifié par la PR #66 est postérieur à v0.4.0. Il constitue
 | Reprise PostgreSQL | Dump, checksum, restauration, sept tables identiques et lecture applicative | Copie locale isolée |
 | Installation reproductible | Installation neuve, migrations, provisionnement, build, systemd, Caddy, sauvegarde/restauration, timer et redémarrages qualifiés | Ubuntu 24.04 éphémère ; PR #66 ; hors DNS/TLS public et VPS réel |
 | Administration courante | Affectations de services, désactivation et réinitialisation des mots de passe qualifiées | CLI dédiée ; PR #64 |
+| Confidentialité du dépôt | Recherche de fichiers secrets usuels, clés/tokens à forte confiance, IBAN et suites numériques suspectes ; historique Git contrôlé | SHA `f3a1e096b2d9e7ee192028d967a3295aaa442b57` ; aucun motif retenu |
 | CI de la PR #59 | Quatre contrôles réussis avant fusion | Ne vaut pas recette de l'instance cible |
 
-Les sections 14 à 17 de DELIVERY.md précisent les versions, environnements
+Les sections 14 à 19 de DELIVERY.md précisent les versions, environnements
 et limites. Aucun contrôle n'est présenté comme exécuté sur l'instance
 de remise lorsqu'il a été réalisé uniquement dans Codespaces.
 
@@ -60,7 +61,6 @@ de remise lorsqu'il a été réalisé uniquement dans Codespaces.
 | Sauvegarde durable | Fixer stockage protégé hors machine, rétention, surveillance et responsables |
 | Reprise cible | Définir perte de données et interruption admissibles ; vérifier la procédure adaptée à la cible |
 | Qualification finale | Rattacher contrôles techniques et parcours authentifiés au SHA et à l'instance remis |
-| Confidentialité | Relire les pièces de remise et le diff final |
 | Réserves | Corriger ou faire accepter explicitement les limites applicables |
 
 Les coordonnées et choix propres au destinataire sont conservés dans
