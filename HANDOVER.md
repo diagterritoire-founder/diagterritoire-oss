@@ -11,17 +11,15 @@ Compléter la fiche nominative hors du dépôt public.
 | --- | --- |
 | Dépôt | diagterritoire-founder/diagterritoire-oss |
 | Release historique | v0.4.0 — 12 septembre 2026 |
-| SHA candidat examiné | e20630b52bcec45e825cfdd284cf1ac577af63a2 |
+| SHA technique qualifié par la PR #66 | 7a6f3ea0c09bbf28b7eb6fe386e0b5963c82ce84 |
 | Cible proposée | Pilote existant — à confirmer |
 | Collectivité destinataire | À renseigner |
 | URL et environnement de remise | À renseigner hors dépôt public |
 | SHA installé sur le pilote OVH le 17 septembre 2026 | 55efadaec7769fa1594a322b09e76df21f130af6 |
-| Version/tag finalement remis | À décider selon MAINTENANCE.md |
+| Version/tag et SHA finalement remis | À renseigner après qualification et fusion finales |
 | Date et décision de réception | À renseigner après recette |
 
-Le SHA candidat est postérieur à v0.4.0. Le tag existant ne doit pas
-être déplacé. Le build Codespaces qualifié ne constitue pas un artefact
-de production à remettre.
+Le SHA technique qualifié par la PR #66 est postérieur à v0.4.0. Il constitue la base technique de cette préparation documentaire, mais pas encore le SHA final de remise. Le tag existant ne doit pas être déplacé. Le build Codespaces qualifié ne constitue pas un artefact de production à remettre.
 
 ## 2. Documents de référence
 
@@ -43,6 +41,8 @@ de production à remettre.
 | Contrôles de droits | 13 tests workflow/consolidation et test supplémentaire de modification par un tiers | Services applicatifs |
 | Déconnexion | Accès direct, actualisation et navigation testés renvoient à Connexion | Deux rôles ; réserve de retour arrière |
 | Reprise PostgreSQL | Dump, checksum, restauration, sept tables identiques et lecture applicative | Copie locale isolée |
+| Installation reproductible | Installation neuve, migrations, provisionnement, build, systemd, Caddy, sauvegarde/restauration, timer et redémarrages qualifiés | Ubuntu 24.04 éphémère ; PR #66 ; hors DNS/TLS public et VPS réel |
+| Administration courante | Affectations de services, désactivation et réinitialisation des mots de passe qualifiées | CLI dédiée ; PR #64 |
 | CI de la PR #59 | Quatre contrôles réussis avant fusion | Ne vaut pas recette de l'instance cible |
 
 Les sections 14 à 17 de DELIVERY.md précisent les versions, environnements
@@ -53,11 +53,9 @@ de remise lorsqu'il a été réalisé uniquement dans Codespaces.
 
 | Condition | Action attendue |
 | --- | --- |
-| Installation reproductible | Vérifier les configurations de service, proxy, environnement et sauvegarde ; exécuter la procédure sur une instance neuve |
 | Instance cible | Confirmer destination, URL HTTPS, SHA installé et configuration réelle |
 | Secrets | AUTH_SECRET durable et secrets hors Git ; session pilote désactivée |
 | Comptes réels | Approuver rôles et services ; transmettre les accès par canal sécurisé |
-| Administration courante | Modification des affectations, désactivation et réinitialisation des mots de passe intégrées et qualifiées par la PR #64 |
 | Exploitation | Désigner responsable métier, administrateur, exploitant et contact support |
 | Sauvegarde durable | Fixer stockage protégé hors machine, rétention, surveillance et responsables |
 | Reprise cible | Définir perte de données et interruption admissibles ; vérifier la procédure adaptée à la cible |
