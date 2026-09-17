@@ -248,3 +248,21 @@ Consigner dans la fiche interne :
 Une page Connexion HTTP 200 ne suffit pas à qualifier ces parcours.
 HANDOVER.md reste le document de décision de remise.
 L'issue #52 demeure ouverte tant que ses conditions ne sont pas satisfaites.
+
+## 10. Vérification des modèles — 17 septembre 2026
+
+Modèles examinés au commit 239f8d0e4e9eb3a8baa4138381c6b83227ada629,
+extraits dans un dossier temporaire sur l'hôte du pilote OVH.
+
+- systemd 259.5 : vérification des deux services et du timer réussie.
+- Le chemin de recherche des unités excluait les compléments locaux
+  de /etc/systemd/system.
+- Caddy 2.11.4 : validation du modèle réussie (« Valid configuration »).
+- Un avertissement de mise en forme du Caddyfile a été signalé.
+- Aucune installation des modèles, activation ou recharge de service
+  n'a été effectuée pendant ce contrôle.
+
+Ces résultats vérifient les configurations dans cet environnement.
+Ils ne prouvent ni une installation neuve, ni l'obtention d'un certificat,
+ni le fonctionnement des services à partir de ces modèles.
+La qualification décrite en section 9 reste à réaliser.
