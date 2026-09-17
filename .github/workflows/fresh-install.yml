@@ -217,7 +217,7 @@ jobs:
           EOF
 
           permissions="$(
-            stat -c '%U:%G %a' \
+            sudo stat -c '%U:%G %a' \
               /etc/diagterritoire/diagterritoire.env
           )"
 
