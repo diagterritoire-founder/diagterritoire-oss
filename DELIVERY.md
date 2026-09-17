@@ -423,3 +423,63 @@ Le dump temporaire ne constitue pas une politique de sauvegarde durable.
 La réserve d'affichage après retour arrière et les autres limites
 non levées des sections précédentes restent applicables.
 L'issue #52 reste ouverte.
+
+## 18. Mise à jour du pilote OVH — 17 septembre 2026
+
+Résultats issus des sorties du serveur et des confirmations de
+l'opérateur pendant la mise à jour du pilote existant.
+
+### Version et préparation
+
+- Ancienne révision : 2ce5be410e6a0a8e00c42380c0ad4853ebbbcf5f.
+- Révision déployée : 55efadaec7769fa1594a322b09e76df21f130af6.
+- Préparation dans un worktree séparé, sans remplacer l'ancienne installation.
+- Aucun changement de dépendances verrouillées ni de fichiers Prisma
+  entre ces deux révisions ; aucune migration ni aucun seed exécuté.
+- npm ci --include=dev réussi.
+- Build de production réussi : TypeScript et 19/19 pages générées.
+- CODESPACES, DT_CODESPACES_RECIPE et DT_ALLOW_PILOT_SESSION
+  explicitement positionnés à false au build et au démarrage.
+- Démarrage préalable sur une adresse de boucle locale, port 3100 :
+  service actif et page Connexion HTTP 200.
+
+### Sauvegarde et activation
+
+Une sauvegarde fraîche a réussi le 17 septembre à 10:08:02 UTC :
+diagterritoire-20260917T100802Z.dump.
+Son checksum est conforme et son catalogue est lisible par pg_restore.
+Ce dump n'a pas fait l'objet d'une nouvelle restauration pendant cette mise à jour.
+
+Le service permanent a été basculé vers le dossier de la nouvelle révision,
+sur 127.0.0.1:3000. Après une première tentative pendant le démarrage,
+le contrôle local a répondu HTTP 200. Le service est actif et son
+WorkingDirectory correspond à la nouvelle révision.
+L'accès public HTTPS à la page Connexion répond également HTTP 200.
+
+L'ancienne installation est conservée. Le retour arrière prévu consiste
+à retirer le complément systemd 52-release.conf, recharger systemd et
+redémarrer le service. Ce retour arrière n'a pas été exécuté pendant
+l'opération réussie.
+
+### Contrôles navigateur après activation
+
+L'opérateur confirme les résultats suivants avec les deux comptes
+distincts du pilote OVH :
+
+| Contrôle | Contributeur | Validateur |
+| --- | --- | --- |
+| Connexion | Réussie | Réussie |
+| Accès aux contributions de Finances | Réussi | Réussi |
+| Déconnexion | Réussie | Réussie |
+| Accès direct à la page protégée après déconnexion | Retour à Connexion | Retour à Connexion |
+
+### Portée
+
+Ces contrôles qualifient la mise à jour et les parcours ci-dessus sur
+le pilote existant. Le cycle complet de mutation des contributions
+n'a pas été rejoué dans ce contrôle.
+La réserve liée au retour arrière du navigateur n'est pas levée par
+ces essais d'accès direct.
+L'installation neuve par un tiers, les autres conditions de HANDOVER.md
+et la réception par le destinataire restent à traiter.
+L'issue #52 reste ouverte.
