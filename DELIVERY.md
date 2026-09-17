@@ -129,7 +129,7 @@ Exécuter les étapes séparément, contrôler leur succès et arrêter au premi
 
 Pour une autre collectivité, collecter organisation, territoire existant dans le référentiel, workspace, services et comptes ; vérifier l'unicité des identifiants et la cohérence des rattachements. L'ouverture initiale paramétrable est désormais fournie par scripts/provision-workspace.mjs, selon PROVISIONING.md. Les essais isolés et la recette navigateur sont consignés dans les compléments de qualification. L'initialisation et les droits de la collectivité effectivement remise restent à vérifier sur sa cible.
 
-Les modèles d'installation du service permanent, du proxy, du fichier d'environnement et du timer sont désormais fournis dans `ops/deployment/`. Leur syntaxe systemd et Caddy a été vérifiée sur l'hôte du pilote. Cette vérification ne remplace pas l'exécution de la procédure complète sur une instance neuve, qui reste à qualifier avant remise.
+Les modèles d'installation du service permanent, du proxy, du fichier d'environnement et du timer sont fournis dans `ops/deployment/`. La PR #66 a qualifié une installation neuve sur Ubuntu 24.04 via `.github/workflows/fresh-install.yml` : Node.js 22, PostgreSQL 16, Caddy, rôle PostgreSQL applicatif restreint, chemins d'exploitation, environnement externe à Git, migrations, provisionnement paramétrable, build de production, service systemd, reverse proxy local, sauvegarde, restauration isolée, timer et redémarrage des services. Cette qualification ne couvre pas le DNS réel, le certificat TLS public, l'accessibilité Internet, le redémarrage complet d'un VPS ni la réception par la collectivité destinataire.
 
 ## 9. Sauvegarde et reprise
 
