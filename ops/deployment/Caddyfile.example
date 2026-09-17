@@ -1,0 +1,5 @@
+# Remplacer par le domaine reel configure dans le DNS.
+# AUTH_URL doit utiliser le meme domaine en HTTPS.
+collectivite.example.org {
+    reverse_proxy 127.0.0.1:3000
+}
