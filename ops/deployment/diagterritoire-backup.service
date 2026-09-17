@@ -1,0 +1,14 @@
+[Unit]
+Description=Sauvegarde PostgreSQL DiagTerritoire
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=diagterritoire
+Group=diagterritoire
+WorkingDirectory=/srv/diagterritoire/app
+EnvironmentFile=/etc/diagterritoire/diagterritoire.env
+ExecStart=/bin/bash /srv/diagterritoire/app/scripts/backup-postgresql.sh
+UMask=0077
+ProtectSystem=full

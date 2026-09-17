@@ -1,0 +1,19 @@
+[Unit]
+Description=DiagTerritoire
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=diagterritoire
+Group=diagterritoire
+WorkingDirectory=/srv/diagterritoire/app
+EnvironmentFile=/etc/diagterritoire/diagterritoire.env
+ExecStart=/usr/bin/env NODE_ENV=production CODESPACES=false DT_CODESPACES_RECIPE=false DT_ALLOW_PILOT_SESSION=false /srv/diagterritoire/app/node_modules/.bin/next start -H 127.0.0.1 -p 3000
+Restart=on-failure
+RestartSec=5
+UMask=0027
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target
