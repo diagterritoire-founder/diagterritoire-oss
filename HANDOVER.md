@@ -11,7 +11,7 @@ Compléter la fiche nominative hors du dépôt public.
 | --- | --- |
 | Dépôt | diagterritoire-founder/diagterritoire-oss |
 | Release historique | v0.4.0 — 12 septembre 2026 |
-| SHA candidat examiné | ce3b4f1b2cab89e98cd28dcf6764e2e7c35a83eb |
+| SHA candidat examiné | e20630b52bcec45e825cfdd284cf1ac577af63a2 |
 | Cible proposée | Pilote existant — à confirmer |
 | Collectivité destinataire | À renseigner |
 | URL et environnement de remise | À renseigner hors dépôt public |
@@ -57,7 +57,7 @@ de remise lorsqu'il a été réalisé uniquement dans Codespaces.
 | Instance cible | Confirmer destination, URL HTTPS, SHA installé et configuration réelle |
 | Secrets | AUTH_SECRET durable et secrets hors Git ; session pilote désactivée |
 | Comptes réels | Approuver rôles et services ; transmettre les accès par canal sécurisé |
-| Administration courante | Formaliser modification des affectations, désactivation et réinitialisation des comptes |
+| Administration courante | Modification des affectations, désactivation et réinitialisation des mots de passe intégrées et qualifiées par la PR #64 |
 | Exploitation | Désigner responsable métier, administrateur, exploitant et contact support |
 | Sauvegarde durable | Fixer stockage protégé hors machine, rétention, surveillance et responsables |
 | Reprise cible | Définir perte de données et interruption admissibles ; vérifier la procédure adaptée à la cible |
@@ -74,8 +74,9 @@ la fiche interne. Aucun SLA ni astreinte n'est présumé.
   Finances. L'actualisation et la navigation testées exigent une connexion.
   L'affichage résiduel reste à traiter ou à accepter explicitement.
 - Les essais des services ne prouvent pas à eux seuls tous les refus HTTP.
-- Le provisionnement initial ne gère ni les mises à jour des comptes,
-  ni leur réactivation, ni la réinitialisation des mots de passe.
+- L'administration courante couvre les affectations de services,
+  la désactivation et la réinitialisation des mots de passe.
+  La réactivation d'un compte reste hors de cette procédure.
 - Les modules affichés « en préparation » restent hors du parcours livré.
 - La reprise isolée ne qualifie pas la perte complète d'un hôte,
   la haute disponibilité ni des objectifs contractuels de reprise.
