@@ -1,0 +1,501 @@
+name: Fresh installation validation
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/fresh-install.yml"
+      - "ops/deployment/**"
+      - "scripts/provision-workspace.mjs"
+      - "scripts/backup-postgresql.sh"
+      - "scripts/restore-postgresql.sh"
+      - "examples/workspace-test-52.json"
+      - "prisma/**"
+      - "package.json"
+      - "package-lock.json"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/fresh-install.yml"
+      - "ops/deployment/**"
+      - "scripts/provision-workspace.mjs"
+      - "scripts/backup-postgresql.sh"
+      - "scripts/restore-postgresql.sh"
+      - "examples/workspace-test-52.json"
+      - "prisma/**"
+      - "package.json"
+      - "package-lock.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fresh-install-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fresh-install:
+    name: Fresh installation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Generate ephemeral qualification secrets
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          db_password="$(openssl rand -hex 24)"
+          auth_secret="$(openssl rand -hex 32)"
+          contributor_password="$(openssl rand -hex 24)"
+          validator_password="$(openssl rand -hex 24)"
+
+          for secret in \
+            "$db_password" \
+            "$auth_secret" \
+            "$contributor_password" \
+            "$validator_password"
+          do
+            printf '::add-mask::%s\n' "$secret"
+          done
+
+          {
+            printf 'DT_FRESH_DB_PASSWORD=%s\n' "$db_password"
+            printf 'DT_FRESH_AUTH_SECRET=%s\n' "$auth_secret"
+            printf 'DT_FRESH_CONTRIBUTOR_PASSWORD=%s\n' "$contributor_password"
+            printf 'DT_FRESH_VALIDATOR_PASSWORD=%s\n' "$validator_password"
+          } >> "$GITHUB_ENV"
+
+      - name: Install host prerequisites
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            postgresql \
+            postgresql-client \
+            caddy
+
+          node --version | grep -E '^v22\.'
+          psql --version | grep -E ' 16\.'
+          caddy version
+
+          sudo systemctl enable --now postgresql
+          sudo systemctl stop caddy || true
+
+          sudo ln -sf "$(command -v node)" /usr/local/bin/node
+          sudo ln -sf "$(command -v npm)" /usr/local/bin/npm
+
+          /usr/local/bin/node --version | grep -E '^v22\.'
+
+      - name: Prepare isolated PostgreSQL databases
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          sudo -u postgres psql \
+            -v ON_ERROR_STOP=1 \
+            --set=ci_password="$DT_FRESH_DB_PASSWORD" <<'SQL'
+          CREATE ROLE diagterritoire_ci
+            LOGIN
+            PASSWORD :'ci_password'
+            NOSUPERUSER
+            NOCREATEDB
+            NOCREATEROLE;
+
+          CREATE DATABASE diagterritoire_fresh_install
+            OWNER diagterritoire_ci;
+
+          CREATE DATABASE diagterritoire_fresh_restore
+            OWNER diagterritoire_ci;
+          SQL
+
+          privileges="$(
+            sudo -u postgres psql -Atqc \
+              "SELECT rolsuper, rolcreatedb, rolcreaterole
+               FROM pg_roles
+               WHERE rolname = 'diagterritoire_ci';"
+          )"
+
+          test "$privileges" = "f|f|f"
+
+          listen_addresses="$(
+            sudo -u postgres psql -Atqc \
+              'SHOW listen_addresses;'
+          )"
+
+          test "$listen_addresses" = "localhost"
+
+      - name: Prepare fresh application filesystem
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          test ! -e /srv/diagterritoire/app
+          test ! -e /etc/diagterritoire/diagterritoire.env
+
+          sudo useradd \
+            --system \
+            --user-group \
+            --home-dir /srv/diagterritoire \
+            --create-home \
+            --shell /usr/sbin/nologin \
+            diagterritoire
+
+          sudo install -d \
+            -o diagterritoire \
+            -g diagterritoire \
+            -m 0750 \
+            /srv/diagterritoire/app
+
+          sudo install -d \
+            -o root \
+            -g diagterritoire \
+            -m 0750 \
+            /etc/diagterritoire
+
+          sudo install -d \
+            -o diagterritoire \
+            -g diagterritoire \
+            -m 0700 \
+            /var/backups/diagterritoire
+
+          sudo cp -a "$GITHUB_WORKSPACE/." /srv/diagterritoire/app/
+          sudo chown -R \
+            diagterritoire:diagterritoire \
+            /srv/diagterritoire/app
+
+          installed_sha="$(
+            sudo -H -u diagterritoire \
+              git -C /srv/diagterritoire/app rev-parse HEAD
+          )"
+
+          test "$installed_sha" = "$GITHUB_SHA"
+
+          sudo -H -u diagterritoire \
+            bash -c \
+            'cd /srv/diagterritoire/app && npm ci --include=dev'
+
+      - name: Install external runtime environment
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          database_url="postgresql://diagterritoire_ci:${DT_FRESH_DB_PASSWORD}@127.0.0.1:5432/diagterritoire_fresh_install"
+
+          sudo install \
+            -o root \
+            -g diagterritoire \
+            -m 0640 \
+            /dev/null \
+            /etc/diagterritoire/diagterritoire.env
+
+          sudo tee \
+            /etc/diagterritoire/diagterritoire.env \
+            >/dev/null <<EOF
+          NODE_ENV=production
+          DATABASE_URL=${database_url}
+          AUTH_SECRET=${DT_FRESH_AUTH_SECRET}
+          AUTH_URL=http://127.0.0.1:8080
+          AUTH_TRUST_HOST=true
+          DT_ALLOW_PILOT_SESSION=false
+          CODESPACES=false
+          DT_CODESPACES_RECIPE=false
+          BACKUP_DIR=/var/backups/diagterritoire
+          RETENTION_DAYS=7
+          EOF
+
+          permissions="$(
+            sudo stat -c '%U:%G %a' \
+              /etc/diagterritoire/diagterritoire.env
+          )"
+
+          test "$permissions" = "root:diagterritoire 640"
+
+      - name: Migrate and provision fresh collectivity
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          database_url="postgresql://diagterritoire_ci:${DT_FRESH_DB_PASSWORD}@127.0.0.1:5432/diagterritoire_fresh_install"
+
+          sudo systemd-run \
+            --wait \
+            --pipe \
+            --collect \
+            --property=User=diagterritoire \
+            --property=Group=diagterritoire \
+            --property=WorkingDirectory=/srv/diagterritoire/app \
+            --property=EnvironmentFile=/etc/diagterritoire/diagterritoire.env \
+            /usr/bin/env npm run db:migrate
+
+          sudo -H -u diagterritoire \
+            env \
+            DATABASE_URL="$database_url" \
+            bash -c \
+            'cd /srv/diagterritoire/app &&
+             ./node_modules/.bin/tsx \
+             scripts/provision-workspace.mjs \
+             examples/workspace-test-52.json \
+             --check'
+
+          sudo -H -u diagterritoire \
+            env \
+            DATABASE_URL="$database_url" \
+            DT_PROVISION_CONFIRM_DATABASE=diagterritoire_fresh_install \
+            DT_PROVISION_TEST_CONTRIBUTOR_PASSWORD="$DT_FRESH_CONTRIBUTOR_PASSWORD" \
+            DT_PROVISION_TEST_VALIDATOR_PASSWORD="$DT_FRESH_VALIDATOR_PASSWORD" \
+            bash -c \
+            'cd /srv/diagterritoire/app &&
+             ./node_modules/.bin/tsx \
+             scripts/provision-workspace.mjs \
+             examples/workspace-test-52.json \
+             --apply'
+
+          test "$(
+            psql "$database_url" -Atqc \
+              'SELECT count(*) FROM "Workspace";'
+          )" = "1"
+
+          test "$(
+            psql "$database_url" -Atqc \
+              'SELECT count(*) FROM "WorkspaceService";'
+          )" = "1"
+
+          test "$(
+            psql "$database_url" -Atqc \
+              'SELECT count(*) FROM "WorkspaceUser";'
+          )" = "2"
+
+          test "$(
+            psql "$database_url" -Atqc \
+              'SELECT count(*) FROM "WorkspaceCredential";'
+          )" = "2"
+
+      - name: Build and install systemd services
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          sudo systemd-run \
+            --wait \
+            --pipe \
+            --collect \
+            --property=User=diagterritoire \
+            --property=Group=diagterritoire \
+            --property=WorkingDirectory=/srv/diagterritoire/app \
+            --property=EnvironmentFile=/etc/diagterritoire/diagterritoire.env \
+            /usr/bin/env \
+            NODE_ENV=production \
+            CODESPACES=false \
+            DT_CODESPACES_RECIPE=false \
+            DT_ALLOW_PILOT_SESSION=false \
+            npm run build
+
+          sudo install \
+            -o root \
+            -g root \
+            -m 0644 \
+            /srv/diagterritoire/app/ops/deployment/diagterritoire.service \
+            /srv/diagterritoire/app/ops/deployment/diagterritoire-backup.service \
+            /srv/diagterritoire/app/ops/deployment/diagterritoire-backup.timer \
+            /etc/systemd/system/
+
+          sudo systemd-analyze verify \
+            /etc/systemd/system/diagterritoire.service \
+            /etc/systemd/system/diagterritoire-backup.service \
+            /etc/systemd/system/diagterritoire-backup.timer
+
+          sudo systemctl daemon-reload
+          sudo systemctl enable --now diagterritoire.service
+
+          systemctl is-active --quiet diagterritoire.service
+
+          curl \
+            --noproxy '*' \
+            --retry 10 \
+            --retry-connrefused \
+            --retry-delay 1 \
+            --connect-timeout 3 \
+            --max-time 10 \
+            -fsS \
+            -o /dev/null \
+            -w 'Application HTTP %{http_code}\n' \
+            http://127.0.0.1:3000/connexion
+
+          ss -ltnH | grep -E '127\.0\.0\.1:3000'
+
+          if ss -ltnH | grep -Eq \
+            '(^|[[:space:]])(0\.0\.0\.0|\*):3000([[:space:]]|$)'
+          then
+            echo 'Application publiquement liée sur le port 3000.'
+            exit 1
+          fi
+
+      - name: Validate Caddy and local reverse proxy
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          sudo caddy validate \
+            --config \
+            /srv/diagterritoire/app/ops/deployment/Caddyfile.example \
+            --adapter caddyfile
+
+          sudo tee /etc/caddy/Caddyfile >/dev/null <<'CADDY'
+          http://127.0.0.1:8080 {
+              reverse_proxy 127.0.0.1:3000
+          }
+          CADDY
+
+          sudo caddy validate \
+            --config /etc/caddy/Caddyfile \
+            --adapter caddyfile
+
+          sudo systemctl enable --now caddy
+          sudo systemctl restart caddy
+
+          systemctl is-active --quiet caddy
+
+          curl \
+            --noproxy '*' \
+            --retry 10 \
+            --retry-connrefused \
+            --retry-delay 1 \
+            --connect-timeout 3 \
+            --max-time 10 \
+            -fsS \
+            -o /dev/null \
+            -w 'Proxy HTTP %{http_code}\n' \
+            http://127.0.0.1:8080/connexion
+
+      - name: Validate backup and isolated restore
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          database_url="postgresql://diagterritoire_ci:${DT_FRESH_DB_PASSWORD}@127.0.0.1:5432/diagterritoire_fresh_install"
+          target_url="postgresql://diagterritoire_ci:${DT_FRESH_DB_PASSWORD}@127.0.0.1:5432/diagterritoire_fresh_restore"
+
+          sudo systemctl start diagterritoire-backup.service
+
+          test "$(
+            systemctl show \
+              diagterritoire-backup.service \
+              -p Result \
+              --value
+          )" = "success"
+
+          test "$(
+            systemctl show \
+              diagterritoire-backup.service \
+              -p ExecMainStatus \
+              --value
+          )" = "0"
+
+          backup_file="$(
+            sudo sh -c \
+              'ls -1t /var/backups/diagterritoire/diagterritoire-*.dump | head -1'
+          )"
+
+          test -n "$backup_file"
+          test "$(sudo stat -c '%a' "$backup_file")" = "600"
+          test "$(sudo stat -c '%a' "$backup_file.sha256")" = "600"
+
+          sudo -H -u diagterritoire \
+            bash -c \
+            "cd /var/backups/diagterritoire &&
+             sha256sum -c '$(basename "$backup_file").sha256'"
+
+          sudo -H -u diagterritoire \
+            env \
+            BACKUP_FILE="$backup_file" \
+            TARGET_DATABASE_URL="$target_url" \
+            RESTORE_CONFIRM_DATABASE=diagterritoire_fresh_restore \
+            bash \
+            /srv/diagterritoire/app/scripts/restore-postgresql.sh
+
+          for table in \
+            Workspace \
+            WorkspaceService \
+            WorkspaceUser \
+            WorkspaceCredential \
+            _prisma_migrations
+          do
+            source_count="$(
+              psql "$database_url" -Atqc \
+                "SELECT count(*) FROM \"$table\";"
+            )"
+
+            restored_count="$(
+              psql "$target_url" -Atqc \
+                "SELECT count(*) FROM \"$table\";"
+            )"
+
+            printf '%s: source=%s restore=%s\n' \
+              "$table" \
+              "$source_count" \
+              "$restored_count"
+
+            test "$source_count" = "$restored_count"
+          done
+
+          sudo -H -u diagterritoire \
+            env DATABASE_URL="$target_url" \
+            bash -c \
+            'cd /srv/diagterritoire/app &&
+             ./node_modules/.bin/prisma migrate status'
+
+      - name: Validate timer and service restart
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          sudo systemctl enable --now diagterritoire-backup.timer
+
+          systemctl is-enabled --quiet diagterritoire-backup.timer
+          systemctl is-active --quiet diagterritoire-backup.timer
+
+          sudo systemctl restart postgresql
+          sudo systemctl restart diagterritoire.service
+          sudo systemctl restart caddy
+
+          systemctl is-active --quiet postgresql
+          systemctl is-active --quiet diagterritoire.service
+          systemctl is-active --quiet caddy
+          systemctl is-active --quiet diagterritoire-backup.timer
+
+          curl \
+            --noproxy '*' \
+            --retry 10 \
+            --retry-connrefused \
+            --retry-delay 1 \
+            --connect-timeout 3 \
+            --max-time 10 \
+            -fsS \
+            -o /dev/null \
+            -w 'Restart HTTP %{http_code}\n' \
+            http://127.0.0.1:8080/connexion
+
+          systemctl show \
+            diagterritoire.service \
+            --no-pager \
+            -p ActiveState \
+            -p SubState \
+            -p WorkingDirectory
+
+          systemctl list-timers \
+            --all \
+            --no-pager \
+            diagterritoire-backup.timer
