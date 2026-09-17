@@ -15,7 +15,7 @@ Compléter la fiche nominative hors du dépôt public.
 | Cible proposée | Pilote existant — à confirmer |
 | Collectivité destinataire | À renseigner |
 | URL et environnement de remise | À renseigner hors dépôt public |
-| SHA réellement installé | À relever sur l'instance cible |
+| SHA installé sur le pilote OVH le 17 septembre 2026 | 55efadaec7769fa1594a322b09e76df21f130af6 |
 | Version/tag finalement remis | À décider selon MAINTENANCE.md |
 | Date et décision de réception | À renseigner après recette |
 
@@ -93,3 +93,5 @@ Décision actuelle : remise non prononcée ; issue #52 ouverte.
 - accord du destinataire, date, version et SHA acceptés.
 
 Cette fiche n'élargit pas le périmètre fonctionnel.
+
+La mise à jour du pilote OVH et les contrôles des deux rôles sont consignés dans DELIVERY.md, section 18. Cette preuve ne vaut pas réception par une collectivité destinataire.
