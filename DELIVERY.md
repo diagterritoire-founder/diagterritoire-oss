@@ -83,7 +83,7 @@ Les boutons dépendent du statut et des droits. En cas de modification concurren
 
 À la prise en charge, vérifier la fiche de remise, les comptes, leurs statuts actifs, les rôles cumulés et les affectations aux services. Tester les accès attendus et les refus hors périmètre. Distinguer le rôle applicatif administrator des privilèges système de l'exploitant.
 
-Le provisionnement initial paramétrable est documenté dans PROVISIONING.md et vérifié en environnement isolé. La modification des droits, la désactivation des comptes et la réinitialisation individuelle des mots de passe restent à formaliser et qualifier pour l'exploitation courante. Le seed existant est spécifique au pilote et réapplique les mots de passe des deux comptes pilotes : ne pas l'utiliser comme outil de gestion courante d'une autre collectivité.
+Le provisionnement initial paramétrable est documenté dans PROVISIONING.md et vérifié en environnement isolé. L'administration courante est assurée par `scripts/manage-workspace-user.mjs` pour la modification des affectations de services, la désactivation d'un compte et la réinitialisation individuelle de son mot de passe. Ces opérations disposent d'un mode de contrôle sans écriture et d'un mode d'application avec confirmation explicite de la base cible. Les secrets de réinitialisation sont fournis hors Git par variables d'environnement `DT_ADMIN_*`. Le seed existant reste spécifique au pilote et ne doit pas être utilisé comme outil de gestion courante d'une autre collectivité.
 
 Sur le pilote utilisant les noms de services documentés, l'exploitant habilité peut consulter :
 
@@ -129,7 +129,7 @@ Exécuter les étapes séparément, contrôler leur succès et arrêter au premi
 
 Pour une autre collectivité, collecter organisation, territoire existant dans le référentiel, workspace, services et comptes ; vérifier l'unicité des identifiants et la cohérence des rattachements. L'ouverture initiale paramétrable est désormais fournie par scripts/provision-workspace.mjs, selon PROVISIONING.md. Les essais isolés et la recette navigateur sont consignés dans les compléments de qualification. L'initialisation et les droits de la collectivité effectivement remise restent à vérifier sur sa cible.
 
-Il reste également à fournir les configurations d'installation du service permanent, du proxy, du fichier d'environnement et du timer adaptées à la cible, avec leurs droits et commandes de mise en place. Les descriptions historiques du pilote ne suffisent pas à prouver qu'un tiers installe seul une instance neuve.
+Les modèles d'installation du service permanent, du proxy, du fichier d'environnement et du timer sont désormais fournis dans `ops/deployment/`. Leur syntaxe systemd et Caddy a été vérifiée sur l'hôte du pilote. Cette vérification ne remplace pas l'exécution de la procédure complète sur une instance neuve, qui reste à qualifier avant remise.
 
 ## 9. Sauvegarde et reprise
 
