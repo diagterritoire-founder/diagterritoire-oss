@@ -1,15 +1,18 @@
 import type { NextConfig } from "next";
 
-const codespacesRecipe =
+const codespaceHost =
   process.env.CODESPACES === "true" &&
-  process.env.DT_CODESPACES_RECIPE === "true";
+  process.env.CODESPACE_NAME &&
+  process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN
+    ? `${process.env.CODESPACE_NAME}-3000.${process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}`
+    : undefined;
 
 const nextConfig: NextConfig = {
-  ...(codespacesRecipe
+  ...(codespaceHost
     ? {
         experimental: {
           serverActions: {
-            allowedOrigins: ["localhost:3200"],
+            allowedOrigins: [codespaceHost, "localhost:3000"],
           },
         },
       }
