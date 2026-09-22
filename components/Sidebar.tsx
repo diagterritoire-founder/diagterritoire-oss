@@ -2,6 +2,7 @@ import Link from "next/link";
 
 const navigationItems = [
   { label: "Tableau de bord", href: "/dashboard", icon: "⌂" },
+  { label: "Espace Métiers", href: "/espace-metiers", icon: "▣" },
   { label: "Territoires", href: "/territoires", icon: "◎" },
   { label: "Indicateurs", href: "/indicateurs", icon: "▥" },
   { label: "Diagnostics", href: "/diagnostics", icon: "◇" },
