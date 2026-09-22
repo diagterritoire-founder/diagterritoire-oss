@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import DashboardLayout from "@/components/DashboardLayout";
+import DocumentContributionForm from "./DocumentContributionForm";
 import {
   createContributionDraftAction,
 } from "./actions";
@@ -179,6 +180,13 @@ export default async function ContributionsPage({
             </Link>
           </div>
         </section>
+
+        {canCreate ? (
+          <DocumentContributionForm
+            territoryId={territory.id}
+            serviceId={service.id}
+          />
+        ) : null}
 
         {canCreate ? (
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
