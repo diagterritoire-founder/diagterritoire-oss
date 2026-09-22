@@ -4,6 +4,9 @@ import {
 } from "next/navigation";
 
 import {
+  WorkspaceAccessEngine,
+} from "@/core/engines/WorkspaceAccessEngine";
+import {
   WorkspaceRepository,
 } from "@/core/repositories/WorkspaceRepository";
 import {
@@ -25,6 +28,18 @@ export default async function WorkspaceEntryPage() {
 
   if (!result) {
     notFound();
+  }
+
+  const accessibleServices =
+    WorkspaceAccessEngine.filterAccessibleServices(
+      session.user,
+      result.services,
+    );
+
+  if (accessibleServices.length === 1) {
+    redirect(
+      `/espace-metiers/${result.workspace.territoryId}/${accessibleServices[0].id}/contributions`,
+    );
   }
 
   redirect(
