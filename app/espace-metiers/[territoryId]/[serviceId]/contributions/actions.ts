@@ -256,7 +256,7 @@ export async function createDocumentDraftWithUploadAction(
         sha256: createHash("sha256")
           .update(upload.bytes)
           .digest("hex"),
-        content: upload.bytes,
+        content: Uint8Array.from(upload.bytes),
         createdAt: new Date(),
       },
     });
