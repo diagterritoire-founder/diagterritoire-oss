@@ -8,15 +8,19 @@ const codespaceHost =
     : undefined;
 
 const nextConfig: NextConfig = {
-  ...(codespaceHost
-    ? {
-        experimental: {
-          serverActions: {
-            allowedOrigins: [codespaceHost, "localhost:3000"],
-          },
-        },
-      }
-    : {}),
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "12mb",
+      ...(codespaceHost
+        ? {
+            allowedOrigins: [
+              codespaceHost,
+              "localhost:3000",
+            ],
+          }
+        : {}),
+    },
+  },
 };
 
 export default nextConfig;
