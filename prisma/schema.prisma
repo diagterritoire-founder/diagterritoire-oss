@@ -119,7 +119,8 @@ model WorkspaceContribution {
 
   validator WorkspaceUser? @relation("ContributionValidator", fields: [validatorUserId], references: [id], onDelete: SetNull)
 
-  history ContributionHistoryEntry[]
+  history    ContributionHistoryEntry[]
+  attachment WorkspaceContributionAttachment?
 
   @@index([workspaceId])
   @@index([serviceId])
@@ -128,6 +129,22 @@ model WorkspaceContribution {
   @@index([authorUserId])
   @@index([validatorUserId])
   @@index([updatedAt])
+}
+
+model WorkspaceContributionAttachment {
+  id             String   @id
+  contributionId String   @unique
+  fileName       String
+  mimeType       String
+  sizeBytes      Int
+  sha256         String
+  content        Bytes
+  createdAt      DateTime
+
+  contribution WorkspaceContribution @relation(fields: [contributionId], references: [id], onDelete: Cascade)
+
+  @@index([sha256])
+  @@index([createdAt])
 }
 
 model ContributionHistoryEntry {
