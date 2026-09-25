@@ -36,6 +36,17 @@ type CouncilFollowUpProps = {
   actions: CouncilAction[];
 };
 
+type CouncilStateResponse = {
+  followUp: Record<string, FollowUpItem>;
+  updatedAt: string | null;
+};
+
+type PersistenceStatus =
+  | "loading"
+  | "saved"
+  | "saving"
+  | "error";
+
 function priorityWeight(
   priority: CouncilAction["priority"],
 ) {
@@ -74,6 +85,24 @@ function statusLabel(status: FollowUpStatus) {
   return "À décider";
 }
 
+function persistenceLabel(
+  status: PersistenceStatus,
+) {
+  if (status === "loading") {
+    return "Chargement du suivi partagé…";
+  }
+
+  if (status === "saving") {
+    return "Enregistrement du suivi dans DiagTerritoire…";
+  }
+
+  if (status === "error") {
+    return "Le suivi n’a pas pu être synchronisé. Réessayez après quelques instants.";
+  }
+
+  return "Suivi enregistré dans DiagTerritoire.";
+}
+
 export default function CouncilFollowUp({
   territoryId,
   actions,
@@ -96,48 +125,132 @@ export default function CouncilFollowUp({
     [actions],
   );
 
-  const storageKey =
-    `diagterritoire:council-follow-up:${territoryId}`;
-
   const [items, setItems] = useState<
     Record<string, FollowUpItem>
   >({});
+  const [loaded, setLoaded] = useState(false);
+  const [editRevision, setEditRevision] = useState(0);
+  const [persistenceStatus, setPersistenceStatus] =
+    useState<PersistenceStatus>("loading");
 
-  const [hydrated, setHydrated] = useState(false);
+  const stateUrl =
+    `/api/conseil-municipal/${encodeURIComponent(
+      territoryId,
+    )}/state`;
 
   useEffect(() => {
-    try {
-      const stored =
-        window.localStorage.getItem(storageKey);
+    let cancelled = false;
 
-      if (stored) {
-        const saved = JSON.parse(stored);
+    async function loadSharedFollowUp() {
+      setPersistenceStatus("loading");
+
+      try {
+        const response = await fetch(stateUrl, {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            "Chargement du suivi impossible.",
+          );
+        }
+
+        const payload =
+          (await response.json()) as CouncilStateResponse;
+
+        if (cancelled) {
+          return;
+        }
 
         if (
-          saved &&
-          typeof saved === "object" &&
-          !Array.isArray(saved)
+          payload.followUp &&
+          typeof payload.followUp === "object" &&
+          !Array.isArray(payload.followUp)
         ) {
-          setItems(saved);
+          setItems(payload.followUp);
+        }
+
+        setPersistenceStatus("saved");
+      } catch {
+        if (!cancelled) {
+          setPersistenceStatus("error");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoaded(true);
         }
       }
-    } catch {
-      // Une sauvegarde locale invalide ne bloque pas le suivi.
-    } finally {
-      setHydrated(true);
     }
-  }, [storageKey]);
+
+    void loadSharedFollowUp();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [stateUrl]);
 
   useEffect(() => {
-    if (!hydrated) {
+    if (
+      !loaded ||
+      editRevision === 0
+    ) {
       return;
     }
 
-    window.localStorage.setItem(
-      storageKey,
-      JSON.stringify(items),
+    const controller =
+      new AbortController();
+
+    const timeoutId = window.setTimeout(
+      async () => {
+        setPersistenceStatus("saving");
+
+        try {
+          const response = await fetch(
+            stateUrl,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+              body: JSON.stringify({
+                followUp: items,
+              }),
+              signal: controller.signal,
+            },
+          );
+
+          if (!response.ok) {
+            throw new Error(
+              "Enregistrement impossible.",
+            );
+          }
+
+          setPersistenceStatus("saved");
+        } catch (error) {
+          if (
+            error instanceof DOMException &&
+            error.name === "AbortError"
+          ) {
+            return;
+          }
+
+          setPersistenceStatus("error");
+        }
+      },
+      450,
     );
-  }, [hydrated, items, storageKey]);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [
+    editRevision,
+    items,
+    loaded,
+    stateUrl,
+  ]);
 
   function getItem(
     indicatorId: string,
@@ -177,6 +290,10 @@ export default function CouncilFollowUp({
         },
       };
     });
+
+    setEditRevision(
+      (current) => current + 1,
+    );
   }
 
   if (trackedActions.length === 0) {
@@ -196,8 +313,23 @@ export default function CouncilFollowUp({
       <p className="mt-2 text-sm leading-6 text-slate-600 print:hidden">
         Renseignez les décisions prises, leur responsable,
         leur échéance et leur état d’avancement.
-        Le suivi est sauvegardé automatiquement
-        sur cet appareil pour ce territoire.
+        Le suivi est enregistré automatiquement dans
+        DiagTerritoire et partagé avec les utilisateurs
+        autorisés de ce territoire.
+      </p>
+
+      <p
+        className={
+          "mt-2 text-xs print:hidden " +
+          (persistenceStatus === "error"
+            ? "text-rose-700"
+            : "text-cyan-700")
+        }
+        aria-live="polite"
+      >
+        {persistenceLabel(
+          persistenceStatus,
+        )}
       </p>
 
       <div className="mt-5 space-y-5">
@@ -233,6 +365,7 @@ export default function CouncilFollowUp({
 
                   <select
                     value={item.status}
+                    disabled={!loaded}
                     onChange={(event) =>
                       updateItem(
                         action.indicatorId,
@@ -243,7 +376,7 @@ export default function CouncilFollowUp({
                         },
                       )
                     }
-                    className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-900"
+                    className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <option value="a_decider">
                       À décider
@@ -274,6 +407,8 @@ export default function CouncilFollowUp({
                   <input
                     type="text"
                     value={item.responsible}
+                    disabled={!loaded}
+                    maxLength={200}
                     onChange={(event) =>
                       updateItem(
                         action.indicatorId,
@@ -284,7 +419,7 @@ export default function CouncilFollowUp({
                       )
                     }
                     placeholder="Service ou responsable"
-                    className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-900"
+                    className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </label>
 
@@ -296,6 +431,7 @@ export default function CouncilFollowUp({
                   <input
                     type="date"
                     value={item.dueDate}
+                    disabled={!loaded}
                     onChange={(event) =>
                       updateItem(
                         action.indicatorId,
@@ -305,7 +441,7 @@ export default function CouncilFollowUp({
                         },
                       )
                     }
-                    className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-900"
+                    className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </label>
 
@@ -317,6 +453,8 @@ export default function CouncilFollowUp({
                   <input
                     type="text"
                     value={item.decision}
+                    disabled={!loaded}
+                    maxLength={500}
                     onChange={(event) =>
                       updateItem(
                         action.indicatorId,
@@ -327,7 +465,7 @@ export default function CouncilFollowUp({
                       )
                     }
                     placeholder="Décision ou orientation retenue"
-                    className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-900"
+                    className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </label>
               </div>
@@ -339,6 +477,8 @@ export default function CouncilFollowUp({
 
                 <textarea
                   value={item.note}
+                  disabled={!loaded}
+                  maxLength={2000}
                   onChange={(event) =>
                     updateItem(
                       action.indicatorId,
@@ -349,7 +489,7 @@ export default function CouncilFollowUp({
                   }
                   rows={3}
                   placeholder="Avancement, difficulté, prochaine étape..."
-                  className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-900"
+                  className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </label>
 

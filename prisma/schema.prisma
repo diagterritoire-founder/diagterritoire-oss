@@ -17,9 +17,10 @@ model Workspace {
   createdAt      DateTime
   updatedAt      DateTime
 
-  services      WorkspaceService[]
-  users         WorkspaceUser[]
-  contributions WorkspaceContribution[]
+  services                 WorkspaceService[]
+  users                    WorkspaceUser[]
+  contributions            WorkspaceContribution[]
+  councilPreparationStates CouncilPreparationState[]
 
   @@index([territoryId])
   @@index([organizationId])
@@ -162,4 +163,24 @@ model ContributionHistoryEntry {
   @@index([contributionId])
   @@index([actorUserId])
   @@index([createdAt])
+}
+
+model CouncilPreparationState {
+  id               String   @id
+  workspaceId      String
+  territoryId      String
+  sessionDate      String?
+  sessionTime      String?
+  sessionLocation  String?
+  sessionSubject   String?
+  followUp         Json?
+  updatedByUserId  String?
+  createdAt        DateTime
+  updatedAt        DateTime
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, territoryId])
+  @@index([territoryId])
+  @@index([updatedAt])
 }
