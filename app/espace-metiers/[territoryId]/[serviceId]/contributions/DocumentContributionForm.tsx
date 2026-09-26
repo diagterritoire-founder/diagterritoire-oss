@@ -2,6 +2,7 @@ import {
   createContributionDraftAction,
   createDocumentDraftWithUploadAction,
 } from "./actions";
+import StructuredContributionImportForm from "./StructuredContributionImportForm";
 import {
   DOCUMENT_UPLOAD_ACCEPT,
 } from "@/core/documents/DocumentUploadPolicy";
@@ -219,6 +220,11 @@ export default function DocumentContributionForm({
           </div>
         </form>
       </div>
+
+      <StructuredContributionImportForm
+        territoryId={territoryId}
+        serviceId={serviceId}
+      />
     </section>
   );
 }
