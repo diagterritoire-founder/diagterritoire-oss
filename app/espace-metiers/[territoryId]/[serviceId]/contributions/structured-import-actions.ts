@@ -20,12 +20,6 @@ export type StructuredImportActionState = {
   errors: string[];
 };
 
-export const initialStructuredImportState: StructuredImportActionState = {
-  status: "idle",
-  message: "",
-  errors: [],
-};
-
 function requiredString(
   formData: FormData,
   name: string,
