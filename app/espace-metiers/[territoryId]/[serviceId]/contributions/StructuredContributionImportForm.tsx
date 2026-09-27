@@ -1,9 +1,10 @@
 "use client";
 
 import {
-  useActionState,
-  useEffect,
+  type FormEvent,
   useRef,
+  useState,
+  useTransition,
 } from "react";
 
 import {
@@ -37,20 +38,59 @@ export default function StructuredContributionImportForm({
 }: StructuredContributionImportFormProps) {
   const formRef =
     useRef<HTMLFormElement>(null);
-  const [
-    state,
-    formAction,
-    isPending,
-  ] = useActionState(
-    importStructuredContributionsAction,
-    initialState,
-  );
+  const [state, setState] =
+    useState<StructuredImportActionState>(initialState);
+  const [selectedFileName, setSelectedFileName] =
+    useState("");
+  const [isPending, startTransition] =
+    useTransition();
 
-  useEffect(() => {
-    if (state.status === "success") {
-      formRef.current?.reset();
+  const handleSubmit = (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const fileInput =
+      form.elements.namedItem("file");
+
+    if (
+      !(fileInput instanceof HTMLInputElement) ||
+      !fileInput.files?.[0]
+    ) {
+      setState({
+        status: "error",
+        message:
+          "Sélectionnez un fichier CSV à importer.",
+        errors: [],
+      });
+      return;
     }
-  }, [state]);
+
+    const file = fileInput.files[0];
+    const formData = new FormData();
+
+    formData.set("territoryId", territoryId);
+    formData.set("serviceId", serviceId);
+    formData.set("file", file, file.name);
+
+    setState(initialState);
+
+    startTransition(async () => {
+      const result =
+        await importStructuredContributionsAction(
+          initialState,
+          formData,
+        );
+
+      setState(result);
+
+      if (result.status === "success") {
+        formRef.current?.reset();
+        setSelectedFileName("");
+      }
+    });
+  };
 
   return (
     <section className="mt-6 rounded-2xl border border-sky-200 bg-sky-50 p-5">
@@ -79,7 +119,7 @@ export default function StructuredContributionImportForm({
 
       <form
         ref={formRef}
-        action={formAction}
+        onSubmit={handleSubmit}
         className="mt-5 grid gap-4"
       >
         <input
@@ -102,9 +142,22 @@ export default function StructuredContributionImportForm({
             name="file"
             required
             accept=".csv,text/csv,application/csv,application/vnd.ms-excel,text/plain"
+            onChange={(event) => {
+              const fileName =
+                event.currentTarget.files?.[0]?.name ?? "";
+
+              setSelectedFileName(fileName);
+              setState(initialState);
+            }}
             className="block w-full rounded-xl border border-dashed border-sky-300 bg-white px-4 py-4 text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-sky-800 file:px-4 file:py-2 file:font-semibold file:text-white"
           />
         </label>
+
+        <p className="text-xs leading-5 text-slate-500">
+          {selectedFileName
+            ? `Fichier sélectionné : ${selectedFileName}`
+            : "Aucun fichier sélectionné."}
+        </p>
 
         <p className="text-xs leading-5 text-slate-500">
           Chaque ligne valide crée un brouillon dans ce service. Rien n’est publié automatiquement : le circuit Soumettre → Examiner → Valider → Publier reste inchangé.
