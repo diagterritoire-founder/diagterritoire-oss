@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import {
-  readStructuredContributionCsv,
-  type StructuredCsvFileCandidate,
+  STRUCTURED_CSV_MAX_BYTES,
+  parseStructuredContributionCsvText,
 } from "@/core/imports/StructuredContributionCsv";
 import {
   CurrentWorkspaceSession,
@@ -20,56 +20,92 @@ export type StructuredImportActionState = {
   errors: string[];
 };
 
-function requiredString(
-  formData: FormData,
-  name: string,
-) {
-  const value = formData.get(name);
+export type StructuredImportPayload = {
+  territoryId: string;
+  serviceId: string;
+  fileName: string;
+  text: string;
+};
 
+function requiredString(
+  value: unknown,
+  message = "Contexte d’import invalide.",
+) {
   if (
     typeof value !== "string" ||
     !value.trim()
   ) {
-    throw new Error(
-      "Contexte d’import invalide.",
-    );
+    throw new Error(message);
   }
 
   return value.trim();
 }
 
-function requiredCsvFile(
-  formData: FormData,
-): StructuredCsvFileCandidate {
-  const value = formData.get("file");
+function validatePayload(
+  payload: StructuredImportPayload,
+) {
+  const fileName = requiredString(
+    payload.fileName,
+    "Sélectionnez un fichier CSV à importer.",
+  );
 
-  if (
-    !value ||
-    typeof value === "string" ||
-    typeof value.name !== "string" ||
-    typeof value.size !== "number" ||
-    typeof value.arrayBuffer !== "function"
-  ) {
-    throw new Error(
-      "Sélectionnez un fichier CSV à importer.",
-    );
+  if (!fileName.toLowerCase().endsWith(".csv")) {
+    return {
+      rows: [],
+      errors: [
+        "Le fichier doit être au format CSV (.csv).",
+      ],
+    };
   }
 
-  return value;
+  if (typeof payload.text !== "string") {
+    return {
+      rows: [],
+      errors: [
+        "Le contenu du fichier CSV est invalide.",
+      ],
+    };
+  }
+
+  const byteLength = new TextEncoder().encode(
+    payload.text,
+  ).byteLength;
+
+  if (
+    byteLength <= 0 ||
+    byteLength > STRUCTURED_CSV_MAX_BYTES
+  ) {
+    return {
+      rows: [],
+      errors: [
+        "Le fichier CSV doit contenir des données et ne pas dépasser 1 Mo.",
+      ],
+    };
+  }
+
+  if (payload.text.includes("\u0000")) {
+    return {
+      rows: [],
+      errors: [
+        "Le fichier CSV contient des caractères non valides.",
+      ],
+    };
+  }
+
+  return parseStructuredContributionCsvText(
+    payload.text,
+  );
 }
 
 export async function importStructuredContributionsAction(
-  _previousState: StructuredImportActionState,
-  formData: FormData,
+  payload: StructuredImportPayload,
 ): Promise<StructuredImportActionState> {
   try {
     const territoryId = requiredString(
-      formData,
-      "territoryId",
+      payload.territoryId,
     );
     const serviceId = requiredString(
-      formData,
-      "serviceId",
+      payload.serviceId,
     );
     const session =
       await CurrentWorkspaceSession.get();
@@ -83,10 +119,7 @@ export async function importStructuredContributionsAction(
       };
     }
 
-    const validation =
-      await readStructuredContributionCsv(
-        requiredCsvFile(formData),
-      );
+    const validation = validatePayload(payload);
 
     if (validation.errors.length > 0) {
       return {

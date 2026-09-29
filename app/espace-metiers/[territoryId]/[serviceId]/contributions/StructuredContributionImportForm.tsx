@@ -8,6 +8,9 @@ import {
 } from "react";
 
 import {
+  STRUCTURED_CSV_MAX_BYTES,
+} from "@/core/imports/StructuredContributionCsv";
+import {
   importStructuredContributionsAction,
   type StructuredImportActionState,
 } from "./structured-import-actions";
@@ -68,20 +71,58 @@ export default function StructuredContributionImportForm({
     }
 
     const file = fileInput.files[0];
-    const formData = new FormData();
 
-    formData.set("territoryId", territoryId);
-    formData.set("serviceId", serviceId);
-    formData.set("file", file, file.name);
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      setState({
+        status: "error",
+        message:
+          "Le fichier doit être au format CSV (.csv).",
+        errors: [],
+      });
+      return;
+    }
+
+    if (
+      file.size <= 0 ||
+      file.size > STRUCTURED_CSV_MAX_BYTES
+    ) {
+      setState({
+        status: "error",
+        message:
+          "Le fichier CSV doit contenir des données et ne pas dépasser 1 Mo.",
+        errors: [],
+      });
+      return;
+    }
 
     setState(initialState);
 
     startTransition(async () => {
+      let text: string;
+
+      try {
+        const bytes = await file.arrayBuffer();
+        text = new TextDecoder(
+          "utf-8",
+          { fatal: true },
+        ).decode(bytes);
+      } catch {
+        setState({
+          status: "error",
+          message:
+            "Le fichier CSV doit être encodé en UTF-8.",
+          errors: [],
+        });
+        return;
+      }
+
       const result =
-        await importStructuredContributionsAction(
-          initialState,
-          formData,
-        );
+        await importStructuredContributionsAction({
+          territoryId,
+          serviceId,
+          fileName: file.name,
+          text,
+        });
 
       setState(result);
 
@@ -122,17 +163,6 @@ export default function StructuredContributionImportForm({
         onSubmit={handleSubmit}
         className="mt-5 grid gap-4"
       >
-        <input
-          type="hidden"
-          name="territoryId"
-          value={territoryId}
-        />
-        <input
-          type="hidden"
-          name="serviceId"
-          value={serviceId}
-        />
-
         <label className="space-y-2">
           <span className="text-sm font-semibold text-slate-700">
             Fichier CSV
