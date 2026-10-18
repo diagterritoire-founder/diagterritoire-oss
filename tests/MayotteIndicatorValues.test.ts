@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -72,5 +73,32 @@ test(
       ),
       [],
     );
+  },
+);
+
+
+test(
+  "raccorde la page Indicateurs aux valeurs de Dzaoudzi-Labattoir",
+  () => {
+    const source = readFileSync(
+      "app/indicateurs/page.tsx",
+      "utf8",
+    );
+
+    const expectedTokens = [
+      "getMayotteIndicatorValues",
+      "territory-commune-dzaoudzi-labattoir",
+      "Valeur territoriale",
+      "Valeur non disponible",
+      "Période",
+      "Source",
+    ];
+
+    for (const token of expectedTokens) {
+      assert.ok(
+        source.includes(token),
+        `app/indicateurs/page.tsx: ${token} absent`,
+      );
+    }
   },
 );
