@@ -1,5 +1,5 @@
 import type { DiagnosticIndicator } from "@/core/engines";
-import type { Indicator } from "@/types/domain";
+import type {\n  Indicator,\n  IndicatorObservation,\n} from "@/types/domain";
 
 import {
   mayotteCommunes,
@@ -14,6 +14,13 @@ import {
 import {
   MAYOTTE_FIXED_COVERAGE_2026_T1,
 } from "./mayotte-digital-coverage";
+
+export type MayotteIndicatorValue = Pick<
+  IndicatorObservation,
+  "indicatorId" | "territoryId" | "numericValue"
+> & {
+  referencePeriod: string;
+};
 
 const territories = [
   ...(mayotteDepartment ? [mayotteDepartment] : []),
@@ -221,6 +228,127 @@ function percentage(
   }
 
   return Math.round((value / total) * 1000) / 10;
+}
+
+export function getMayotteIndicatorValues(
+  identifier: string,
+): MayotteIndicatorValue[] {
+  const territory = resolveTerritory(identifier);
+  const values = aggregate(identifier);
+
+  if (!territory || !values) {
+    return [];
+  }
+
+  const percentageWhenAvailable = (
+    value: number,
+    total: number,
+  ): number | undefined => {
+    if (total === 0) {
+      return undefined;
+    }
+
+    return percentage(value, total);
+  };
+
+  const digitalCoverage = Array.from(
+    getCommuneCodes(identifier),
+  ).reduce(
+    (total, code) => {
+      const coverage =
+        MAYOTTE_FIXED_COVERAGE_2026_T1[code];
+
+      if (!coverage) {
+        return total;
+      }
+
+      return {
+        premises: total.premises + coverage.premises,
+        atLeast30Mbps:
+          total.atLeast30Mbps + coverage.atLeast30Mbps,
+        hasData: true,
+      };
+    },
+    {
+      premises: 0,
+      atLeast30Mbps: 0,
+      hasData: false,
+    },
+  );
+
+  return [
+    {
+      indicatorId: "population-2026",
+      territoryId: territory.id,
+      numericValue: values.population2026,
+      referencePeriod: "2025-2026",
+    },
+    {
+      indicatorId: "population-growth-2017-2026",
+      territoryId: territory.id,
+      numericValue: percentageWhenAvailable(
+        values.population2026 - values.population2017,
+        values.population2017,
+      ),
+      referencePeriod: "2017-2026",
+    },
+    {
+      indicatorId: "employment-2017",
+      territoryId: territory.id,
+      numericValue: percentageWhenAvailable(
+        values.employed,
+        values.population15Plus,
+      ),
+      referencePeriod: "2017",
+    },
+    {
+      indicatorId: "qualified-2017",
+      territoryId: territory.id,
+      numericValue: percentageWhenAvailable(
+        values.qualified,
+        values.nonStudent15Plus,
+      ),
+      referencePeriod: "2017",
+    },
+    {
+      indicatorId: "water-inside-2017",
+      territoryId: territory.id,
+      numericValue: percentageWhenAvailable(
+        values.waterInside,
+        values.residences,
+      ),
+      referencePeriod: "2017",
+    },
+    {
+      indicatorId: "electricity-2017",
+      territoryId: territory.id,
+      numericValue: percentageWhenAvailable(
+        values.electricity,
+        values.residences,
+      ),
+      referencePeriod: "2017",
+    },
+    {
+      indicatorId: "internet-2017",
+      territoryId: territory.id,
+      numericValue: percentageWhenAvailable(
+        values.internet,
+        values.residences,
+      ),
+      referencePeriod: "2017",
+    },
+    {
+      indicatorId: "fixed-thd-coverage-2026",
+      territoryId: territory.id,
+      numericValue: digitalCoverage.hasData
+        ? percentageWhenAvailable(
+            digitalCoverage.atLeast30Mbps,
+            digitalCoverage.premises,
+          )
+        : undefined,
+      referencePeriod: "2026 T1",
+    },
+  ];
 }
 
 export function getMayotteIndicators(
