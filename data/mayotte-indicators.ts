@@ -1,5 +1,8 @@
 import type { DiagnosticIndicator } from "@/core/engines";
-import type {\n  Indicator,\n  IndicatorObservation,\n} from "@/types/domain";
+import type {
+  Indicator,
+  IndicatorObservation,
+} from "@/types/domain";
 
 import {
   mayotteCommunes,
