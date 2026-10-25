@@ -8,10 +8,11 @@ import {
 
 import {
   getMayotteIndicators,
+  getMayotteIndicatorValues,
 } from "@/data/mayotte-indicators";
 
 import {
-  mayotteDepartment,
+  mayotteCommunes,
 } from "@/data/mayotte-territories";
 
 const categoryIcons: Record<string, string> = {
@@ -22,14 +23,54 @@ const categoryIcons: Record<string, string> = {
   "Numérique": "🌐",
 };
 
+function formatIndicatorValue(
+  value: number,
+  valueType: string,
+): string {
+  return new Intl.NumberFormat(
+    "fr-FR",
+    {
+      maximumFractionDigits:
+        valueType === "percentage"
+          ? 1
+          : 0,
+    },
+  ).format(value);
+}
+
 export default function IndicateursPage() {
+  const territory =
+    mayotteCommunes.find(
+      (commune) =>
+        commune.code === "97608",
+    );
+
   const territoryId =
-    mayotteDepartment?.id ??
-    "territory-mayotte";
+    territory?.id ??
+    "territory-commune-dzaoudzi-labattoir";
+
+  const territoryName =
+    territory?.name ??
+    "Dzaoudzi-Labattoir";
 
   const indicators =
     getMayotteIndicators(
       territoryId,
+    );
+
+  const indicatorValues =
+    getMayotteIndicatorValues(
+      territoryId,
+    );
+
+  const valueByIndicatorId =
+    new Map(
+      indicatorValues.map(
+        (value) => [
+          value.indicatorId,
+          value,
+        ],
+      ),
     );
 
   const categories =
@@ -70,7 +111,7 @@ export default function IndicateursPage() {
     <DashboardLayout
       eyebrow="Indicateurs"
       title="Catalogue des indicateurs"
-      description="Explorez le référentiel d’indicateurs actuellement intégré à DiagTerritoire pour Mayotte."
+      description={`Explorez le référentiel d’indicateurs et les valeurs territoriales disponibles pour ${territoryName}.`}
     >
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
@@ -145,79 +186,125 @@ export default function IndicateursPage() {
 
       <PageSection
         title="Référentiel des indicateurs"
-        subtitle="Métadonnées, source, unité et fréquence de mise à jour. Les valeurs territoriales détaillées seront intégrées dans l’étape suivante."
+        subtitle={`Valeurs disponibles pour ${territoryName}, avec unité, période de référence, source et fréquence de mise à jour.`}
       >
         <div className="grid gap-4 lg:grid-cols-2">
           {indicators.map(
-            (indicator) => (
-              <article
-                key={indicator.id}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <span className="inline-flex rounded-full bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-700">
-                      {
-                        indicator.category
-                      }
+            (indicator) => {
+              const territorialValue =
+                valueByIndicatorId.get(
+                  indicator.id,
+                );
+
+              const hasValue =
+                territorialValue
+                  ?.numericValue !==
+                undefined;
+
+              return (
+                <article
+                  key={indicator.id}
+                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <span className="inline-flex rounded-full bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-700">
+                        {
+                          indicator.category
+                        }
+                      </span>
+                    </div>
+
+                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                      Actif
                     </span>
-
                   </div>
 
-                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                    Actif
-                  </span>
-                </div>
+                  <h3 className="mt-4 text-lg font-bold text-slate-950">
+                    {indicator.name}
+                  </h3>
 
-                <h3 className="mt-4 text-lg font-bold text-slate-950">
-                  {indicator.name}
-                </h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {
+                      indicator.description
+                    }
+                  </p>
 
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {
-                    indicator.description
-                  }
-                </p>
+                  <div className="mt-5 rounded-2xl bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      Valeur territoriale
+                    </p>
 
-                <dl className="mt-5 grid gap-3 border-t border-slate-100 pt-4 text-sm sm:grid-cols-2">
-                  <div>
-                    <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                      Unité
-                    </dt>
-                    <dd className="mt-1 font-medium text-slate-700">
-                      {
-                        indicator.unit ??
-                        "Non renseignée"
-                      }
-                    </dd>
+                    <p className="mt-2 text-2xl font-bold text-slate-950">
+                      {hasValue
+                        ? `${formatIndicatorValue(
+                            territorialValue
+                              .numericValue as number,
+                            indicator.valueType,
+                          )}${indicator.unit
+                            ? ` ${indicator.unit}`
+                            : ""}`
+                        : "Valeur non disponible"}
+                    </p>
+
+                    <p className="mt-1 text-sm text-slate-500">
+                      {territoryName}
+                    </p>
                   </div>
 
-                  <div>
-                    <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                      Mise à jour
-                    </dt>
-                    <dd className="mt-1 font-medium text-slate-700">
-                      {
-                        indicator.updateFrequency ??
-                        "Non renseignée"
-                      }
-                    </dd>
-                  </div>
+                  <dl className="mt-5 grid gap-3 border-t border-slate-100 pt-4 text-sm sm:grid-cols-2">
+                    <div>
+                      <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                        Période
+                      </dt>
+                      <dd className="mt-1 font-medium text-slate-700">
+                        {
+                          territorialValue
+                            ?.referencePeriod ??
+                          "Non disponible"
+                        }
+                      </dd>
+                    </div>
 
-                  <div className="sm:col-span-2">
-                    <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                      Source
-                    </dt>
-                    <dd className="mt-1 leading-6 text-slate-700">
-                      {
-                        indicator.source ??
-                        "Non renseignée"
-                      }
-                    </dd>
-                  </div>
-                </dl>
-              </article>
-            ),
+                    <div>
+                      <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                        Unité
+                      </dt>
+                      <dd className="mt-1 font-medium text-slate-700">
+                        {
+                          indicator.unit ??
+                          "Non renseignée"
+                        }
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                        Mise à jour
+                      </dt>
+                      <dd className="mt-1 font-medium text-slate-700">
+                        {
+                          indicator.updateFrequency ??
+                          "Non renseignée"
+                        }
+                      </dd>
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                        Source
+                      </dt>
+                      <dd className="mt-1 leading-6 text-slate-700">
+                        {
+                          indicator.source ??
+                          "Non renseignée"
+                        }
+                      </dd>
+                    </div>
+                  </dl>
+                </article>
+              );
+            },
           )}
         </div>
       </PageSection>
