@@ -1,3 +1,5 @@
+import { notFound } from "next/navigation";
+
 import DashboardLayout from "@/components/DashboardLayout";
 import PageSection from "@/components/PageSection";
 import StatCard from "@/components/StatCard";
@@ -12,8 +14,9 @@ import {
 } from "@/data/mayotte-indicators";
 
 import {
-  mayotteCommunes,
-} from "@/data/mayotte-territories";
+  indicatorTerritoryGroups,
+  resolveMayotteIndicatorTerritory,
+} from "@/data/mayotte-indicator-territories";
 
 const categoryIcons: Record<string, string> = {
   "Démographie": "👥",
@@ -38,20 +41,26 @@ function formatIndicatorValue(
   ).format(value);
 }
 
-export default function IndicateursPage() {
-  const territory =
-    mayotteCommunes.find(
-      (commune) =>
-        commune.code === "97608",
-    );
+type IndicateursPageProps = {
+  searchParams: Promise<{
+    territoire?: string | string[];
+  }>;
+};
 
-  const territoryId =
-    territory?.id ??
-    "territory-commune-dzaoudzi-labattoir";
+export default async function IndicateursPage({
+  searchParams,
+}: IndicateursPageProps) {
+  const params = await searchParams;
+  const territory = resolveMayotteIndicatorTerritory(
+    params.territoire,
+  );
 
-  const territoryName =
-    territory?.name ??
-    "Dzaoudzi-Labattoir";
+  if (!territory) {
+    notFound();
+  }
+
+  const territoryId = territory.id;
+  const territoryName = territory.name;
 
   const indicators =
     getMayotteIndicators(
@@ -113,6 +122,51 @@ export default function IndicateursPage() {
       title="Catalogue des indicateurs"
       description={`Explorez le référentiel d’indicateurs et les valeurs territoriales disponibles pour ${territoryName}.`}
     >
+      <section className="mb-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-bold text-slate-950">
+          Choisir un territoire
+        </h2>
+        <p className="mt-2 text-sm text-slate-500">
+          Consultez les indicateurs disponibles pour une commune,
+          une intercommunalité ou Mayotte.
+        </p>
+        <form
+          action="/indicateurs"
+          method="get"
+          className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end"
+        >
+          <label
+            htmlFor="indicateurs-territoire"
+            className="flex-1 text-sm font-semibold text-slate-700"
+          >
+            Territoire consulté
+            <select
+              id="indicateurs-territoire"
+              name="territoire"
+              defaultValue={territoryId}
+              required
+              className="mt-2 block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950"
+            >
+              {indicatorTerritoryGroups.map((group) => (
+                <optgroup key={group.label} label={group.label}>
+                  {group.territories.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </label>
+          <button
+            type="submit"
+            className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+          >
+            Afficher les indicateurs
+          </button>
+        </form>
+      </section>
+
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Indicateurs"
