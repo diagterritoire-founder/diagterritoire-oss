@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import DashboardLayout from "@/components/DashboardLayout";
@@ -12,6 +13,7 @@ import {
   getMayotteIndicators,
   getMayotteIndicatorValues,
 } from "@/data/mayotte-indicators";
+import { getComparableIndicatorTerritories } from "@/data/mayotte-indicator-comparison";
 
 import {
   indicatorTerritoryGroups,
@@ -61,6 +63,11 @@ export default async function IndicateursPage({
 
   const territoryId = territory.id;
   const territoryName = territory.name;
+
+  const comparableTerritories = getComparableIndicatorTerritories(territoryId);
+  const suggestedPeer =
+    comparableTerritories.find((item) => item.parentId === territory.parentId) ??
+    comparableTerritories[0];
 
   const indicators =
     getMayotteIndicators(
@@ -165,6 +172,14 @@ export default async function IndicateursPage({
             Afficher les indicateurs
           </button>
         </form>
+        {suggestedPeer ? (
+          <Link
+            href={"/indicateurs/comparer?territoireA=" + encodeURIComponent(territoryId) + "&territoireB=" + encodeURIComponent(suggestedPeer.id)}
+            className="mt-4 inline-block text-sm font-semibold text-cyan-800 underline"
+          >
+            Comparer les valeurs avec un autre territoire du même niveau
+          </Link>
+        ) : null}
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
