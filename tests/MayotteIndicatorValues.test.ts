@@ -87,7 +87,8 @@ test(
 
     const expectedTokens = [
       "getMayotteIndicatorValues",
-      "territory-commune-dzaoudzi-labattoir",
+      "resolveMayotteIndicatorTerritory",
+      "territoire",
       "Valeur territoriale",
       "Valeur non disponible",
       "Période",
