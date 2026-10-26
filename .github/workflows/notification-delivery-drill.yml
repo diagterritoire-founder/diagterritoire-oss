@@ -1,0 +1,31 @@
+name: Notification delivery drill (manual only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Saisir SIMULER_ALERTE pour tester une notification d echec (aucune panne reelle).'
+        type: string
+        required: true
+        default: 'ANNULER'
+
+permissions:
+  contents: read
+
+jobs:
+  notification-drill:
+    name: Controlled failed-workflow notification test
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Simulate failure only after explicit confirmation
+        shell: bash
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          if [[ "$CONFIRM" != "SIMULER_ALERTE" ]]; then
+            echo 'Aucune simulation demandee. Fin sans echec.'
+            exit 0
+          fi
+          echo '::error title=TEST ALERTE DIAGTERRITOIRE::Echec intentionnel et isole pour verifier les notifications GitHub Actions. Aucun incident en production.'
+          exit 1
