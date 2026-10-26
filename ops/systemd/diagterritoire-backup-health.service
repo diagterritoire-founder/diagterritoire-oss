@@ -1,0 +1,19 @@
+[Unit]
+Description=DiagTerritoire - verifier integrite et fraicheur des sauvegardes locales
+After=local-fs.target
+ConditionPathExists=/usr/local/libexec/diagterritoire/check-backup-health.sh
+
+[Service]
+Type=oneshot
+User=diagterritoire
+Group=diagterritoire
+ExecStart=/usr/bin/bash /usr/local/libexec/diagterritoire/check-backup-health.sh
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+StandardOutput=journal
+StandardError=journal
+
+# Le compte diagterritoire doit pouvoir lire /var/backups/diagterritoire.
+# Aucun acces DB, aucune ecriture de sauvegarde ni redemarrage applicatif.
