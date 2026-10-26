@@ -3,6 +3,10 @@ import {
   getMayotteIndicatorValues,
 } from "./mayotte-indicators";
 import {
+  getMayotteIndicatorProvenance,
+  type MayotteIndicatorProvenance,
+} from "./mayotte-indicator-provenance";
+import {
   indicatorTerritories,
   resolveMayotteIndicatorTerritory,
 } from "./mayotte-indicator-territories";
@@ -13,6 +17,7 @@ export type IndicatorComparisonRow = {
   category: string;
   unit: string;
   source: string;
+  provenance?: MayotteIndicatorProvenance;
   leftValue: number | undefined;
   rightValue: number | undefined;
   leftPeriod: string | undefined;
@@ -112,6 +117,7 @@ export function compareMayotteIndicatorValues(
       category: indicator.category,
       unit: indicator.unit ?? "",
       source: indicator.source ?? "Non renseignée",
+      provenance: getMayotteIndicatorProvenance(indicator.id, left.level),
       leftValue,
       rightValue,
       leftPeriod: leftObservation?.referencePeriod,

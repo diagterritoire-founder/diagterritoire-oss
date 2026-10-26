@@ -14,6 +14,7 @@ import {
   getMayotteIndicatorValues,
 } from "@/data/mayotte-indicators";
 import { getComparableIndicatorTerritories } from "@/data/mayotte-indicator-comparison";
+import { getMayotteIndicatorProvenance } from "@/data/mayotte-indicator-provenance";
 
 import {
   indicatorTerritoryGroups,
@@ -257,6 +258,11 @@ export default async function IndicateursPage({
         title="Référentiel des indicateurs"
         subtitle={`Valeurs disponibles pour ${territoryName}, avec unité, période de référence, source et fréquence de mise à jour.`}
       >
+        <p className="mb-4 text-sm text-slate-600">
+          Les valeurs proviennent de jeux de données intégrés à DiagTerritoire.
+          La fréquence indiquée décrit celle de la source et ne signifie pas
+          une actualisation automatique. Vérifiez le millésime avant tout usage.
+        </p>
         <div className="grid gap-4 lg:grid-cols-2">
           {indicators.map(
             (indicator) => {
@@ -269,6 +275,11 @@ export default async function IndicateursPage({
                 territorialValue
                   ?.numericValue !==
                 undefined;
+
+              const provenance = getMayotteIndicatorProvenance(
+                indicator.id,
+                territory.level,
+              );
 
               return (
                 <article
@@ -364,12 +375,41 @@ export default async function IndicateursPage({
                         Source
                       </dt>
                       <dd className="mt-1 leading-6 text-slate-700">
-                        {
-                          indicator.source ??
-                          "Non renseignée"
-                        }
+                        {indicator.source ?? "Non renseignée"}
                       </dd>
                     </div>
+                    {provenance ? (
+                      <div className="sm:col-span-2">
+                        <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                          Traçabilité
+                        </dt>
+                        <dd className="mt-1 space-y-2 leading-6 text-slate-700">
+                          <p className="font-semibold">
+                            {provenance.origin === "publication"
+                              ? "Valeur publiée directement"
+                              : "Valeur calculée par DiagTerritoire"}
+                          </p>
+                          <p>{provenance.method}</p>
+                          <ul className="list-disc space-y-1 pl-5">
+                            {provenance.sources.map((source) => (
+                              <li key={source.url}>
+                                <a
+                                  href={source.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="font-semibold text-cyan-800 underline"
+                                >
+                                  {source.label}
+                                </a>
+                                {source.publicationDate
+                                  ? " — publication du " + source.publicationDate
+                                  : " — date de publication non renseignée"}
+                              </li>
+                            ))}
+                          </ul>
+                        </dd>
+                      </div>
+                    ) : null}
                   </dl>
                 </article>
               );

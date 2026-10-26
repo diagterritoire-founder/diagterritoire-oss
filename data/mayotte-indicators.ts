@@ -180,7 +180,9 @@ function aggregate(identifier: string) {
     ([code]) => codes.has(code),
   );
 
-  if (rows.length === 0) {
+  // Une somme partielle ferait apparaître un chiffre trompeur pour un EPCI
+  // ou le département : toutes les communes attendues doivent être présentes.
+  if (codes.size === 0 || rows.length !== codes.size) {
     return undefined;
   }
 
@@ -269,13 +271,13 @@ export function getMayotteIndicatorValues(
         premises: total.premises + coverage.premises,
         atLeast30Mbps:
           total.atLeast30Mbps + coverage.atLeast30Mbps,
-        hasData: true,
+        coveredCommunes: total.coveredCommunes + 1,
       };
     },
     {
       premises: 0,
       atLeast30Mbps: 0,
-      hasData: false,
+      coveredCommunes: 0,
     },
   );
 
@@ -343,7 +345,7 @@ export function getMayotteIndicatorValues(
     {
       indicatorId: "fixed-thd-coverage-2026",
       territoryId: territory.id,
-      numericValue: digitalCoverage.hasData
+      numericValue: digitalCoverage.coveredCommunes === getCommuneCodes(identifier).size
         ? percentageWhenAvailable(
             digitalCoverage.atLeast30Mbps,
             digitalCoverage.premises,
