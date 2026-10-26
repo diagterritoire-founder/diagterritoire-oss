@@ -1,0 +1,11 @@
+[Unit]
+Description=DiagTerritoire - controle horaire des sauvegardes locales
+
+[Timer]
+OnCalendar=*-*-* *:17:00
+Persistent=true
+RandomizedDelaySec=60
+Unit=diagterritoire-backup-health.service
+
+[Install]
+WantedBy=timers.target
