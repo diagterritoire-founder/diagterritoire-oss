@@ -1,0 +1,27 @@
+name: Production HTTPS availability
+
+on:
+  schedule:
+    # Every 15 minutes, avoiding the start of each hour (UTC).
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: diagterritoire-production-availability
+  cancel-in-progress: false
+
+jobs:
+  check-production:
+    name: External HTTPS probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+
+    steps:
+      - name: Checkout monitoring scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check public login over TLS
+        run: bash scripts/monitor-public-availability.sh
