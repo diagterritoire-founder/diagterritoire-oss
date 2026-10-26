@@ -71,6 +71,7 @@ export default async function ComparerIndicateursPage({ searchParams }: PageProp
           L’écart est calculé comme territoire A moins territoire B.
           Pour un taux, il est exprimé en points de pourcentage.
           Une valeur manquante ou une période différente empêche le calcul.
+          Les données intégrées ne se synchronisent pas automatiquement avec les sources officielles.
         </p>
         <form
           action="/indicateurs/comparer"
@@ -141,6 +142,33 @@ export default async function ComparerIndicateursPage({ searchParams }: PageProp
                       <p className="font-semibold text-slate-950">{row.name}</p>
                       <p className="mt-1 text-xs text-slate-500">{row.category}</p>
                       <p className="mt-2 text-xs text-slate-600">Source : {row.source}</p>
+                      {row.provenance ? (
+                        <div className="mt-3 space-y-2 text-xs text-slate-600">
+                          <p className="font-semibold">
+                            {row.provenance.origin === "publication"
+                              ? "Valeur publiée directement"
+                              : "Valeur calculée par DiagTerritoire"}
+                          </p>
+                          <p>{row.provenance.method}</p>
+                          <ul className="list-disc space-y-1 pl-4">
+                            {row.provenance.sources.map((source) => (
+                              <li key={source.url}>
+                                <a
+                                  href={source.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="font-semibold text-cyan-800 underline"
+                                >
+                                  {source.label}
+                                </a>
+                                {source.publicationDate
+                                  ? " — publication du " + source.publicationDate
+                                  : " — date de publication non renseignée"}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
                     </th>
                     <td className="px-4 py-4">
                       <strong className="text-slate-950">
