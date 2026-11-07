@@ -333,6 +333,16 @@ export async function PATCH(
     return authorization.error;
   }
 
+  if (!WorkspaceSessionService.can(
+    authorization.session,
+    "decision:manage",
+  )) {
+    return NextResponse.json(
+      { error: "Accès refusé." },
+      { status: 403 },
+    );
+  }
+
   let body: unknown;
 
   try {
