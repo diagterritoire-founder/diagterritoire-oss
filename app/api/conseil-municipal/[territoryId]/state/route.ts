@@ -11,6 +11,7 @@ import {
 import {
   WorkspaceSessionService,
 } from "@/core/session/WorkspaceSession";
+import { sanitizeCouncilAgenda } from "@/lib/council-agenda";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -263,11 +264,17 @@ function responseBody(
         sessionLocation: string | null;
         sessionSubject: string | null;
         followUp: unknown;
+        agenda: unknown;
         updatedAt: Date;
       }
     | null,
+  canManage: boolean,
 ) {
   return {
+    canManage,
+    agenda: Array.isArray(state?.agenda)
+      ? state.agenda
+      : null,
     session: {
       date: state?.sessionDate ?? "",
       time: state?.sessionTime ?? "",
@@ -310,7 +317,13 @@ export async function GET(
     });
 
   return NextResponse.json(
-    responseBody(state),
+    responseBody(
+      state,
+      WorkspaceSessionService.can(
+        authorization.session,
+        "decision:manage",
+      ),
+    ),
     {
       headers: {
         "Cache-Control": "no-store",
@@ -371,8 +384,13 @@ export async function PATCH(
       body,
       "followUp",
     );
+  const hasAgenda =
+    Object.prototype.hasOwnProperty.call(
+      body,
+      "agenda",
+    );
 
-  if (!hasSession && !hasFollowUp) {
+  if (!hasSession && !hasFollowUp && !hasAgenda) {
     return NextResponse.json(
       { error: "Aucune donnée à enregistrer." },
       { status: 400 },
@@ -385,6 +403,7 @@ export async function PATCH(
   let followUpData:
     | ReturnType<typeof sanitizeFollowUp>
     | null = null;
+  let agendaData: string[] | null = null;
 
   try {
     if (hasSession) {
@@ -397,6 +416,10 @@ export async function PATCH(
       followUpData = sanitizeFollowUp(
         body.followUp,
       );
+    }
+
+    if (hasAgenda) {
+      agendaData = sanitizeCouncilAgenda(body.agenda);
     }
   } catch (error) {
     return NextResponse.json(
@@ -439,6 +462,9 @@ export async function PATCH(
               followUp: followUpData,
             }
           : {}),
+        ...(agendaData !== null
+          ? { agenda: agendaData }
+          : {}),
         updatedByUserId:
           authorization.session.user.id,
         updatedAt: now,
@@ -457,6 +483,9 @@ export async function PATCH(
         sessionSubject:
           sessionData?.subject ?? null,
         followUp: followUpData ?? {},
+        ...(agendaData !== null
+          ? { agenda: agendaData }
+          : {}),
         updatedByUserId:
           authorization.session.user.id,
         createdAt: now,
@@ -465,7 +494,7 @@ export async function PATCH(
     });
 
   return NextResponse.json(
-    responseBody(state),
+    responseBody(state, true),
     {
       headers: {
         "Cache-Control": "no-store",
