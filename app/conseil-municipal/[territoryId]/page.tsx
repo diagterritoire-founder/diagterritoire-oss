@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import CouncilAgenda from "@/components/CouncilAgenda";
 import CouncilFollowUp from "@/components/CouncilFollowUp";
 import CouncilLevers from "@/components/CouncilLevers";
 import CouncilPriorities from "@/components/CouncilPriorities";
@@ -148,6 +149,12 @@ export default async function ConseilMunicipalPage({
         </section>
 
         <CouncilPriorities
+          actions={result.diagnostic.actions}
+        />
+
+        <CouncilAgenda
+          key={result.territory.id}
+          territoryId={result.territory.id}
           actions={result.diagnostic.actions}
         />
 
