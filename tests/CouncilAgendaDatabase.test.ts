@@ -26,7 +26,7 @@ function qualificationDatabaseUrl(): string {
   return url.toString();
 }
 
-test("agenda partagé : versionnage atomique et isolation du workspace (ROLLBACK)", async () => {
+test("agenda partagé : versionnage atomique et isolation du workspace (ROLLBACK)", { skip: process.env.DT_RUN_AGENDA_DB_TEST !== "1" }, async () => {
   const client = new Client({
     connectionString: qualificationDatabaseUrl(),
   });
