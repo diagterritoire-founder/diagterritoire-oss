@@ -21,6 +21,7 @@ type CouncilAgendaProps = {
 
 type CouncilAgendaResponse = {
   agenda: string[] | null;
+  agendaRevision: number;
   canManage: boolean;
 };
 
@@ -29,6 +30,7 @@ type PersistenceStatus =
   | "ready"
   | "saving"
   | "saved"
+  | "conflict"
   | "error";
 
 function priorityWeight(priority: CouncilAction["priority"]) {
@@ -64,6 +66,7 @@ export default function CouncilAgenda({
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [savedSnapshot, setSavedSnapshot] = useState<string | null>(null);
+  const [agendaRevision, setAgendaRevision] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [canManage, setCanManage] = useState(false);
   const [status, setStatus] =
@@ -104,6 +107,10 @@ export default function CouncilAgenda({
             ? null
             : JSON.stringify(selected),
         );
+        if (!Number.isSafeInteger(payload.agendaRevision) || payload.agendaRevision < 0) {
+          throw new Error("Version de l'ordre du jour invalide.");
+        }
+        setAgendaRevision(payload.agendaRevision);
         setCanManage(payload.canManage === true);
         setLoaded(true);
         setStatus("ready");
@@ -128,7 +135,7 @@ export default function CouncilAgenda({
   );
 
   function toggleItem(indicatorId: string) {
-    if (!loaded || !canManage || status === "saving") return;
+    if (!loaded || !canManage || status === "saving" || status === "conflict") return;
 
     setSelectedIds((current) =>
       current.includes(indicatorId)
@@ -139,7 +146,7 @@ export default function CouncilAgenda({
   }
 
   async function saveAgenda() {
-    if (!loaded || !canManage || !dirty || status === "saving") {
+    if (!loaded || !canManage || !dirty || status === "saving" || status === "conflict") {
       return;
     }
 
@@ -151,19 +158,31 @@ export default function CouncilAgenda({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ agenda: selectedIds }),
+        body: JSON.stringify({
+          agenda: selectedIds,
+          expectedAgendaRevision: agendaRevision,
+        }),
       });
 
+      if (response.status === 409) {
+        setStatus("conflict");
+        return;
+      }
       if (!response.ok) {
         throw new Error("Enregistrement impossible.");
       }
 
       const payload =
         (await response.json()) as CouncilAgendaResponse;
-      if (!Array.isArray(payload.agenda)) {
+      if (
+        !Array.isArray(payload.agenda) ||
+        !Number.isSafeInteger(payload.agendaRevision) ||
+        payload.agendaRevision <= agendaRevision
+      ) {
         throw new Error("Réponse de sauvegarde invalide.");
       }
 
+      setAgendaRevision(payload.agendaRevision);
       setSelectedIds(payload.agenda);
       setSavedSnapshot(JSON.stringify(payload.agenda));
       setStatus("saved");
@@ -193,7 +212,7 @@ export default function CouncilAgenda({
       <p
         className={
           "mt-3 text-xs print:hidden " +
-          (status === "error" ? "text-rose-700" : "text-cyan-700")
+          (status === "error" || status === "conflict" ? "text-rose-700" : "text-cyan-700")
         }
         role="status"
         aria-live="polite"
@@ -202,6 +221,8 @@ export default function CouncilAgenda({
           ? "Chargement de l’ordre du jour partagé…"
           : status === "error"
             ? "Impossible de synchroniser la sélection. Réessayez ou rechargez la page."
+            : status === "conflict"
+              ? "Une autre personne a enregistré des changements. Rechargez la page avant de modifier l'ordre du jour."
             : status === "saving"
               ? "Enregistrement dans DiagTerritoire…"
               : !canManage
@@ -223,7 +244,7 @@ export default function CouncilAgenda({
                 <input
                   type="checkbox"
                   checked={selectedIds.includes(item.indicatorId)}
-                  disabled={!canManage || status === "saving"}
+                  disabled={!canManage || status === "saving" || status === "conflict"}
                   onChange={() => toggleItem(item.indicatorId)}
                   className="mt-1 h-4 w-4 disabled:cursor-not-allowed"
                 />
@@ -240,11 +261,21 @@ export default function CouncilAgenda({
           : null}
       </div>
 
+      {loaded && canManage && status === "conflict" ? (
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="mt-4 rounded-xl border border-rose-300 px-5 py-2.5 text-sm font-semibold text-rose-800 print:hidden"
+        >
+          Recharger la sélection partagée
+        </button>
+      ) : null}
+
       {loaded && canManage ? (
         <button
           type="button"
           onClick={() => void saveAgenda()}
-          disabled={!dirty || status === "saving"}
+          disabled={!dirty || status === "saving" || status === "conflict"}
           className="mt-4 rounded-xl bg-cyan-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-50 print:hidden"
         >
           {status === "saving"
