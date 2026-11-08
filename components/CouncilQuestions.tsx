@@ -96,7 +96,7 @@ export default function CouncilQuestions({
       </h2>
 
       <p className="mt-2 text-sm leading-6 text-slate-600">
-        Questions susceptibles d'être soulevées à partir des
+        Questions susceptibles d&apos;être soulevées à partir des
         principaux constats territoriaux disponibles.
       </p>
 
