@@ -25,7 +25,10 @@ test("l'API partagée reste protégée avant toute écriture", () => {
   assert.ok(patch);
   assert.ok(patch.indexOf('"decision:manage"') < patch.indexOf("await request.json()"));
   assert.ok(patch.indexOf("sanitizeCouncilAgenda(body.agenda)") < patch.indexOf("prisma.councilPreparationState.upsert"));
-  assert.match(patch, /agendaData !== null/);
+  assert.match(patch, /expectedAgendaRevision/);
+  assert.match(patch, /agendaRevision: expectedRevision/);
+  assert.match(patch, /agendaRevision: \{ increment: 1 \}/);
+  assert.match(patch, /status: 409/);
   assert.match(source, /canManage/);
 });
 
