@@ -265,6 +265,7 @@ function responseBody(
         sessionSubject: string | null;
         followUp: unknown;
         agenda: unknown;
+        agendaRevision: number;
         updatedAt: Date;
       }
     | null,
@@ -272,6 +273,7 @@ function responseBody(
 ) {
   return {
     canManage,
+    agendaRevision: state?.agendaRevision ?? 0,
     agenda: Array.isArray(state?.agenda)
       ? state.agenda
       : null,
@@ -397,6 +399,13 @@ export async function PATCH(
     );
   }
 
+  if (hasAgenda && (hasSession || hasFollowUp)) {
+    return NextResponse.json(
+      { error: "L'ordre du jour doit être enregistré séparément." },
+      { status: 400 },
+    );
+  }
+
   let sessionData:
     | ReturnType<typeof sanitizeSession>
     | null = null;
@@ -435,6 +444,90 @@ export async function PATCH(
 
   const now = new Date();
 
+  // Mise à jour conditionnelle : un ancien éditeur ne peut écraser la
+  // sélection plus récente d'un autre responsable.
+  if (hasAgenda) {
+    const expectedRevision = body.expectedAgendaRevision;
+    if (
+      typeof expectedRevision !== "number" ||
+      !Number.isSafeInteger(expectedRevision) ||
+      expectedRevision < 0 ||
+      agendaData === null
+    ) {
+      return NextResponse.json(
+        { error: "Version de l'ordre du jour invalide." },
+        { status: 400 },
+      );
+    }
+
+    const where = {
+      workspaceId_territoryId: {
+        workspaceId: authorization.workspaceId,
+        territoryId,
+      },
+    };
+
+    const updated =
+      await prisma.councilPreparationState.updateMany({
+        where: {
+          workspaceId: authorization.workspaceId,
+          territoryId,
+          agendaRevision: expectedRevision,
+        },
+        data: {
+          agenda: agendaData,
+          agendaRevision: { increment: 1 },
+          updatedByUserId: authorization.session.user.id,
+          updatedAt: now,
+        },
+      });
+
+    if (updated.count === 0) {
+      if (expectedRevision !== 0) {
+        return NextResponse.json(
+          { error: "L'ordre du jour a été modifié. Rechargez la page." },
+          { status: 409 },
+        );
+      }
+
+      try {
+        await prisma.councilPreparationState.create({
+          data: {
+            id: randomUUID(),
+            workspaceId: authorization.workspaceId,
+            territoryId,
+            followUp: {},
+            agenda: agendaData,
+            agendaRevision: 1,
+            updatedByUserId: authorization.session.user.id,
+            createdAt: now,
+            updatedAt: now,
+          },
+        });
+      } catch (error) {
+        if (
+          typeof error === "object" &&
+          error !== null &&
+          "code" in error &&
+          error.code === "P2002"
+        ) {
+          return NextResponse.json(
+            { error: "L'ordre du jour a été modifié. Rechargez la page." },
+            { status: 409 },
+          );
+        }
+        throw error;
+      }
+    }
+
+    const saved =
+      await prisma.councilPreparationState.findUnique({ where });
+
+    return NextResponse.json(responseBody(saved, true), {
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
+
   const state =
     await prisma.councilPreparationState.upsert({
       where: {
@@ -462,9 +555,6 @@ export async function PATCH(
               followUp: followUpData,
             }
           : {}),
-        ...(agendaData !== null
-          ? { agenda: agendaData }
-          : {}),
         updatedByUserId:
           authorization.session.user.id,
         updatedAt: now,
@@ -483,9 +573,6 @@ export async function PATCH(
         sessionSubject:
           sessionData?.subject ?? null,
         followUp: followUpData ?? {},
-        ...(agendaData !== null
-          ? { agenda: agendaData }
-          : {}),
         updatedByUserId:
           authorization.session.user.id,
         createdAt: now,
