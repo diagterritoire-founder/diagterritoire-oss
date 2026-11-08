@@ -175,6 +175,7 @@ model CouncilPreparationState {
   sessionSubject   String?
   followUp         Json?
   agenda           Json?
+  agendaRevision   Int      @default(0)
   updatedByUserId  String?
   createdAt        DateTime
   updatedAt        DateTime
