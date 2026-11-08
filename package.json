@@ -45,6 +45,9 @@
   "license": "AGPL-3.0-only",
   "overrides": {
     "mysql2": "3.24.3",
-    "deepmerge-ts": "8.0.2"
+    "deepmerge-ts": "8.0.2",
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.1"
+    }
   }
 }
