@@ -1,10 +1,15 @@
 "use client";
 
 import {
-  useEffect,
+  useCallback,
   useMemo,
-  useState,
+  useSyncExternalStore,
 } from "react";
+
+const AGENDA_CHANGE_EVENT = "diagterritoire:council-agenda-change";
+
+// Permet de conserver la sélection dans la session si localStorage est inaccessible.
+const memorySelections = new Map<string, string>();
 
 type CouncilAction = {
   indicatorId: string;
@@ -58,69 +63,82 @@ export default function CouncilAgenda({
   const storageKey =
     `diagterritoire:council-agenda:${territoryId}`;
 
-  const [selectedIds, setSelectedIds] = useState<
-    string[]
-  >([]);
+  const proposedIds = useMemo(
+    () => proposedItems.map((item) => item.indicatorId),
+    [proposedItems],
+  );
 
-  const [hydrated, setHydrated] = useState(false);
+  const defaultSnapshot = useMemo(
+    () => JSON.stringify(proposedIds),
+    [proposedIds],
+  );
 
-  useEffect(() => {
-    try {
-      const stored =
-        window.localStorage.getItem(storageKey);
-
-      if (stored) {
-        const saved = JSON.parse(stored);
-
-        if (Array.isArray(saved)) {
-          setSelectedIds(
-            saved.filter(
-              (value): value is string =>
-                typeof value === "string",
-            ),
-          );
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      const onStorage = (event: StorageEvent) => {
+        if (event.key === storageKey || event.key === null) {
+          onStoreChange();
         }
-      } else {
-        setSelectedIds(
-          proposedItems.map(
-            (item) => item.indicatorId,
-          ),
+      };
+
+      window.addEventListener("storage", onStorage);
+      window.addEventListener(AGENDA_CHANGE_EVENT, onStoreChange);
+
+      return () => {
+        window.removeEventListener("storage", onStorage);
+        window.removeEventListener(AGENDA_CHANGE_EVENT, onStoreChange);
+      };
+    },
+    [storageKey],
+  );
+
+  const getSnapshot = useCallback(() => {
+    try {
+      return window.localStorage.getItem(storageKey) ?? defaultSnapshot;
+    } catch {
+      return memorySelections.get(storageKey) ?? defaultSnapshot;
+    }
+  }, [storageKey, defaultSnapshot]);
+
+  const getServerSnapshot = useCallback(
+    () => defaultSnapshot,
+    [defaultSnapshot],
+  );
+
+  const snapshot = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
+
+  const selectedIds = useMemo(() => {
+    try {
+      const saved: unknown = JSON.parse(snapshot);
+      if (Array.isArray(saved)) {
+        return saved.filter(
+          (value): value is string => typeof value === "string",
         );
       }
     } catch {
-      setSelectedIds(
-        proposedItems.map(
-          (item) => item.indicatorId,
-        ),
-      );
-    } finally {
-      setHydrated(true);
-    }
-  }, [proposedItems, storageKey]);
-
-  useEffect(() => {
-    if (!hydrated) {
-      return;
+      // Une sélection invalide restaure les propositions par défaut.
     }
 
-    window.localStorage.setItem(
-      storageKey,
-      JSON.stringify(selectedIds),
-    );
-  }, [
-    hydrated,
-    selectedIds,
-    storageKey,
-  ]);
+    return proposedIds;
+  }, [snapshot, proposedIds]);
 
   function toggleItem(indicatorId: string) {
-    setSelectedIds((current) =>
-      current.includes(indicatorId)
-        ? current.filter(
-            (id) => id !== indicatorId,
-          )
-        : [...current, indicatorId],
-    );
+    const updated = selectedIds.includes(indicatorId)
+      ? selectedIds.filter((id) => id !== indicatorId)
+      : [...selectedIds, indicatorId];
+    const serialized = JSON.stringify(updated);
+
+    memorySelections.set(storageKey, serialized);
+    try {
+      window.localStorage.setItem(storageKey, serialized);
+    } catch {
+      // La sélection reste utilisable dans la session courante.
+    }
+    window.dispatchEvent(new Event(AGENDA_CHANGE_EVENT));
   }
 
   const selectedItems = proposedItems.filter(
