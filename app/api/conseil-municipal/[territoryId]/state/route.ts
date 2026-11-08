@@ -11,6 +11,7 @@ import {
 import {
   WorkspaceSessionService,
 } from "@/core/session/WorkspaceSession";
+import { sanitizeCouncilAgenda } from "@/lib/council-agenda";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -263,11 +264,19 @@ function responseBody(
         sessionLocation: string | null;
         sessionSubject: string | null;
         followUp: unknown;
+        agenda: unknown;
+        agendaRevision: number;
         updatedAt: Date;
       }
     | null,
+  canManage: boolean,
 ) {
   return {
+    canManage,
+    agendaRevision: state?.agendaRevision ?? 0,
+    agenda: Array.isArray(state?.agenda)
+      ? state.agenda
+      : null,
     session: {
       date: state?.sessionDate ?? "",
       time: state?.sessionTime ?? "",
@@ -310,7 +319,13 @@ export async function GET(
     });
 
   return NextResponse.json(
-    responseBody(state),
+    responseBody(
+      state,
+      WorkspaceSessionService.can(
+        authorization.session,
+        "decision:manage",
+      ),
+    ),
     {
       headers: {
         "Cache-Control": "no-store",
@@ -371,10 +386,22 @@ export async function PATCH(
       body,
       "followUp",
     );
+  const hasAgenda =
+    Object.prototype.hasOwnProperty.call(
+      body,
+      "agenda",
+    );
 
-  if (!hasSession && !hasFollowUp) {
+  if (!hasSession && !hasFollowUp && !hasAgenda) {
     return NextResponse.json(
       { error: "Aucune donnée à enregistrer." },
+      { status: 400 },
+    );
+  }
+
+  if (hasAgenda && (hasSession || hasFollowUp)) {
+    return NextResponse.json(
+      { error: "L'ordre du jour doit être enregistré séparément." },
       { status: 400 },
     );
   }
@@ -385,6 +412,7 @@ export async function PATCH(
   let followUpData:
     | ReturnType<typeof sanitizeFollowUp>
     | null = null;
+  let agendaData: string[] | null = null;
 
   try {
     if (hasSession) {
@@ -397,6 +425,10 @@ export async function PATCH(
       followUpData = sanitizeFollowUp(
         body.followUp,
       );
+    }
+
+    if (hasAgenda) {
+      agendaData = sanitizeCouncilAgenda(body.agenda);
     }
   } catch (error) {
     return NextResponse.json(
@@ -411,6 +443,90 @@ export async function PATCH(
   }
 
   const now = new Date();
+
+  // Mise à jour conditionnelle : un ancien éditeur ne peut écraser la
+  // sélection plus récente d'un autre responsable.
+  if (hasAgenda) {
+    const expectedRevision = body.expectedAgendaRevision;
+    if (
+      typeof expectedRevision !== "number" ||
+      !Number.isSafeInteger(expectedRevision) ||
+      expectedRevision < 0 ||
+      agendaData === null
+    ) {
+      return NextResponse.json(
+        { error: "Version de l'ordre du jour invalide." },
+        { status: 400 },
+      );
+    }
+
+    const where = {
+      workspaceId_territoryId: {
+        workspaceId: authorization.workspaceId,
+        territoryId,
+      },
+    };
+
+    const updated =
+      await prisma.councilPreparationState.updateMany({
+        where: {
+          workspaceId: authorization.workspaceId,
+          territoryId,
+          agendaRevision: expectedRevision,
+        },
+        data: {
+          agenda: agendaData,
+          agendaRevision: { increment: 1 },
+          updatedByUserId: authorization.session.user.id,
+          updatedAt: now,
+        },
+      });
+
+    if (updated.count === 0) {
+      if (expectedRevision !== 0) {
+        return NextResponse.json(
+          { error: "L'ordre du jour a été modifié. Rechargez la page." },
+          { status: 409 },
+        );
+      }
+
+      try {
+        await prisma.councilPreparationState.create({
+          data: {
+            id: randomUUID(),
+            workspaceId: authorization.workspaceId,
+            territoryId,
+            followUp: {},
+            agenda: agendaData,
+            agendaRevision: 1,
+            updatedByUserId: authorization.session.user.id,
+            createdAt: now,
+            updatedAt: now,
+          },
+        });
+      } catch (error) {
+        if (
+          typeof error === "object" &&
+          error !== null &&
+          "code" in error &&
+          error.code === "P2002"
+        ) {
+          return NextResponse.json(
+            { error: "L'ordre du jour a été modifié. Rechargez la page." },
+            { status: 409 },
+          );
+        }
+        throw error;
+      }
+    }
+
+    const saved =
+      await prisma.councilPreparationState.findUnique({ where });
+
+    return NextResponse.json(responseBody(saved, true), {
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
 
   const state =
     await prisma.councilPreparationState.upsert({
@@ -465,7 +581,7 @@ export async function PATCH(
     });
 
   return NextResponse.json(
-    responseBody(state),
+    responseBody(state, true),
     {
       headers: {
         "Cache-Control": "no-store",

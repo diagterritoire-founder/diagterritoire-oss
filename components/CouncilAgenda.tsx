@@ -1,15 +1,10 @@
 "use client";
 
 import {
-  useCallback,
+  useEffect,
   useMemo,
-  useSyncExternalStore,
+  useState,
 } from "react";
-
-const AGENDA_CHANGE_EVENT = "diagterritoire:council-agenda-change";
-
-// Permet de conserver la sélection dans la session si localStorage est inaccessible.
-const memorySelections = new Map<string, string>();
 
 type CouncilAction = {
   indicatorId: string;
@@ -24,17 +19,23 @@ type CouncilAgendaProps = {
   actions: CouncilAction[];
 };
 
-function priorityWeight(
-  priority: CouncilAction["priority"],
-) {
-  if (priority === "forte") {
-    return 0;
-  }
+type CouncilAgendaResponse = {
+  agenda: string[] | null;
+  agendaRevision: number;
+  canManage: boolean;
+};
 
-  if (priority === "consolider") {
-    return 1;
-  }
+type PersistenceStatus =
+  | "loading"
+  | "ready"
+  | "saving"
+  | "saved"
+  | "conflict"
+  | "error";
 
+function priorityWeight(priority: CouncilAction["priority"]) {
+  if (priority === "forte") return 0;
+  if (priority === "consolider") return 1;
   return 2;
 }
 
@@ -46,109 +47,151 @@ export default function CouncilAgenda({
     () =>
       [...actions]
         .sort((a, b) => {
-          const priorityDifference =
+          const diff =
             priorityWeight(a.priority) -
             priorityWeight(b.priority);
-
-          if (priorityDifference !== 0) {
-            return priorityDifference;
-          }
-
-          return a.score - b.score;
+          return diff !== 0 ? diff : a.score - b.score;
         })
         .slice(0, 5),
     [actions],
   );
-
-  const storageKey =
-    `diagterritoire:council-agenda:${territoryId}`;
 
   const proposedIds = useMemo(
     () => proposedItems.map((item) => item.indicatorId),
     [proposedItems],
   );
 
-  const defaultSnapshot = useMemo(
-    () => JSON.stringify(proposedIds),
-    [proposedIds],
-  );
+  const stateUrl =
+    `/api/conseil-municipal/${encodeURIComponent(territoryId)}/state`;
 
-  const subscribe = useCallback(
-    (onStoreChange: () => void) => {
-      const onStorage = (event: StorageEvent) => {
-        if (event.key === storageKey || event.key === null) {
-          onStoreChange();
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [savedSnapshot, setSavedSnapshot] = useState<string | null>(null);
+  const [agendaRevision, setAgendaRevision] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const [canManage, setCanManage] = useState(false);
+  const [status, setStatus] =
+    useState<PersistenceStatus>("loading");
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadAgenda() {
+      try {
+        const response = await fetch(stateUrl, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          throw new Error("Chargement de l'ordre du jour impossible.");
         }
-      };
 
-      window.addEventListener("storage", onStorage);
-      window.addEventListener(AGENDA_CHANGE_EVENT, onStoreChange);
+        const payload =
+          (await response.json()) as CouncilAgendaResponse;
+        if (controller.signal.aborted) return;
 
-      return () => {
-        window.removeEventListener("storage", onStorage);
-        window.removeEventListener(AGENDA_CHANGE_EVENT, onStoreChange);
-      };
-    },
-    [storageKey],
-  );
+        if (
+          payload.agenda !== null &&
+          (!Array.isArray(payload.agenda) ||
+            !payload.agenda.every((id) => typeof id === "string"))
+        ) {
+          throw new Error("Sélection sauvegardée invalide.");
+        }
 
-  const getSnapshot = useCallback(() => {
-    try {
-      return window.localStorage.getItem(storageKey) ?? defaultSnapshot;
-    } catch {
-      return memorySelections.get(storageKey) ?? defaultSnapshot;
-    }
-  }, [storageKey, defaultSnapshot]);
+        const selected = payload.agenda === null
+          ? proposedIds
+          : payload.agenda.filter((id) => proposedIds.includes(id));
 
-  const getServerSnapshot = useCallback(
-    () => defaultSnapshot,
-    [defaultSnapshot],
-  );
-
-  const snapshot = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
-  );
-
-  const selectedIds = useMemo(() => {
-    try {
-      const saved: unknown = JSON.parse(snapshot);
-      if (Array.isArray(saved)) {
-        return saved.filter(
-          (value): value is string => typeof value === "string",
+        setSelectedIds(selected);
+        setSavedSnapshot(
+          payload.agenda === null
+            ? null
+            : JSON.stringify(selected),
         );
+        if (!Number.isSafeInteger(payload.agendaRevision) || payload.agendaRevision < 0) {
+          throw new Error("Version de l'ordre du jour invalide.");
+        }
+        setAgendaRevision(payload.agendaRevision);
+        setCanManage(payload.canManage === true);
+        setLoaded(true);
+        setStatus("ready");
+      } catch {
+        if (!controller.signal.aborted) {
+          setStatus("error");
+        }
       }
-    } catch {
-      // Une sélection invalide restaure les propositions par défaut.
     }
 
-    return proposedIds;
-  }, [snapshot, proposedIds]);
+    void loadAgenda();
+    return () => controller.abort();
+  }, [proposedIds, stateUrl]);
+
+  const dirty =
+    loaded &&
+    (savedSnapshot === null ||
+      JSON.stringify(selectedIds) !== savedSnapshot);
+
+  const selectedItems = proposedItems.filter((item) =>
+    selectedIds.includes(item.indicatorId),
+  );
 
   function toggleItem(indicatorId: string) {
-    const updated = selectedIds.includes(indicatorId)
-      ? selectedIds.filter((id) => id !== indicatorId)
-      : [...selectedIds, indicatorId];
-    const serialized = JSON.stringify(updated);
+    if (!loaded || !canManage || status === "saving" || status === "conflict") return;
 
-    memorySelections.set(storageKey, serialized);
-    try {
-      window.localStorage.setItem(storageKey, serialized);
-    } catch {
-      // La sélection reste utilisable dans la session courante.
+    setSelectedIds((current) =>
+      current.includes(indicatorId)
+        ? current.filter((id) => id !== indicatorId)
+        : [...current, indicatorId],
+    );
+    setStatus("ready");
+  }
+
+  async function saveAgenda() {
+    if (!loaded || !canManage || !dirty || status === "saving" || status === "conflict") {
+      return;
     }
-    window.dispatchEvent(new Event(AGENDA_CHANGE_EVENT));
+
+    setStatus("saving");
+
+    try {
+      const response = await fetch(stateUrl, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          agenda: selectedIds,
+          expectedAgendaRevision: agendaRevision,
+        }),
+      });
+
+      if (response.status === 409) {
+        setStatus("conflict");
+        return;
+      }
+      if (!response.ok) {
+        throw new Error("Enregistrement impossible.");
+      }
+
+      const payload =
+        (await response.json()) as CouncilAgendaResponse;
+      if (
+        !Array.isArray(payload.agenda) ||
+        !Number.isSafeInteger(payload.agendaRevision) ||
+        payload.agendaRevision <= agendaRevision
+      ) {
+        throw new Error("Réponse de sauvegarde invalide.");
+      }
+
+      setAgendaRevision(payload.agendaRevision);
+      setSelectedIds(payload.agenda);
+      setSavedSnapshot(JSON.stringify(payload.agenda));
+      setStatus("saved");
+    } catch {
+      setStatus("error");
+    }
   }
 
-  const selectedItems = proposedItems.filter(
-    (item) =>
-      selectedIds.includes(item.indicatorId),
-  );
-
-  if (proposedItems.length === 0) {
-    return null;
-  }
+  if (proposedItems.length === 0) return null;
 
   return (
     <section className="rounded-3xl bg-white p-7 shadow-sm print:break-inside-avoid print:shadow-none">
@@ -161,43 +204,85 @@ export default function CouncilAgenda({
       </h2>
 
       <p className="mt-2 text-sm leading-6 text-slate-600 print:hidden">
-        Sélectionnez les sujets à retenir dans le dossier
-        préparatoire. La sélection est sauvegardée
-        automatiquement pour ce territoire.
+        Choisissez les sujets du dossier préparatoire. Après
+        enregistrement, la sélection est partagée avec les utilisateurs
+        autorisés de cette collectivité.
+      </p>
+
+      <p
+        className={
+          "mt-3 text-xs print:hidden " +
+          (status === "error" || status === "conflict" ? "text-rose-700" : "text-cyan-700")
+        }
+        role="status"
+        aria-live="polite"
+      >
+        {status === "loading"
+          ? "Chargement de l’ordre du jour partagé…"
+          : status === "error"
+            ? "Impossible de synchroniser la sélection. Réessayez ou rechargez la page."
+            : status === "conflict"
+              ? "Une autre personne a enregistré des changements. Rechargez la page avant de modifier l'ordre du jour."
+            : status === "saving"
+              ? "Enregistrement dans DiagTerritoire…"
+              : !canManage
+                ? "Consultation seule. La sélection est modifiable par les responsables autorisés."
+                : dirty
+                  ? savedSnapshot === null
+                    ? "Proposition initiale non encore enregistrée."
+                    : "Modifications non enregistrées."
+                  : "Sélection partagée enregistrée dans DiagTerritoire."}
       </p>
 
       <div className="mt-5 space-y-3 print:hidden">
-        {proposedItems.map((item) => {
-          const checked =
-            selectedIds.includes(item.indicatorId);
-
-          return (
-            <label
-              key={item.indicatorId}
-              className="flex cursor-pointer gap-4 rounded-2xl border border-slate-200 p-4"
-            >
-              <input
-                type="checkbox"
-                checked={checked}
-                onChange={() =>
-                  toggleItem(item.indicatorId)
-                }
-                className="mt-1 h-4 w-4"
-              />
-
-              <div>
-                <p className="font-semibold text-slate-950">
-                  {item.indicatorName}
-                </p>
-
-                <p className="mt-1 text-sm leading-6 text-slate-600">
-                  {item.action}
-                </p>
-              </div>
-            </label>
-          );
-        })}
+        {loaded
+          ? proposedItems.map((item) => (
+              <label
+                key={item.indicatorId}
+                className="flex cursor-pointer gap-4 rounded-2xl border border-slate-200 p-4"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(item.indicatorId)}
+                  disabled={!canManage || status === "saving" || status === "conflict"}
+                  onChange={() => toggleItem(item.indicatorId)}
+                  className="mt-1 h-4 w-4 disabled:cursor-not-allowed"
+                />
+                <div>
+                  <p className="font-semibold text-slate-950">
+                    {item.indicatorName}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                    {item.action}
+                  </p>
+                </div>
+              </label>
+            ))
+          : null}
       </div>
+
+      {loaded && canManage && status === "conflict" ? (
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="mt-4 rounded-xl border border-rose-300 px-5 py-2.5 text-sm font-semibold text-rose-800 print:hidden"
+        >
+          Recharger la sélection partagée
+        </button>
+      ) : null}
+
+      {loaded && canManage ? (
+        <button
+          type="button"
+          onClick={() => void saveAgenda()}
+          disabled={!dirty || status === "saving" || status === "conflict"}
+          className="mt-4 rounded-xl bg-cyan-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-50 print:hidden"
+        >
+          {status === "saving"
+            ? "Enregistrement…"
+            : "Enregistrer la sélection"}
+        </button>
+      ) : null}
 
       <div className="mt-5 hidden print:block">
         {selectedItems.length > 0 ? (
@@ -207,15 +292,11 @@ export default function CouncilAgenda({
                 key={item.indicatorId}
                 className="flex gap-3 print:break-inside-avoid"
               >
-                <span className="font-bold">
-                  {index + 1}.
-                </span>
-
+                <span className="font-bold">{index + 1}.</span>
                 <div>
                   <p className="font-semibold text-slate-950">
                     {item.indicatorName}
                   </p>
-
                   <p className="mt-1 text-sm text-slate-700">
                     {item.action}
                   </p>
@@ -231,9 +312,8 @@ export default function CouncilAgenda({
       </div>
 
       <p className="mt-5 text-xs leading-5 text-slate-500">
-        Cette proposition est générée à des fins de
-        préparation. Elle ne constitue pas l’ordre du jour
-        officiel de l’assemblée délibérante.
+        Cette proposition facilite la préparation de la séance. Elle
+        ne constitue pas l’ordre du jour officiel de l’assemblée.
       </p>
     </section>
   );
