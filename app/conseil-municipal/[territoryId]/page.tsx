@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import CouncilAgenda from "@/components/CouncilAgenda";
 import CouncilFollowUp from "@/components/CouncilFollowUp";
 import CouncilLevers from "@/components/CouncilLevers";
 import CouncilPriorities from "@/components/CouncilPriorities";
